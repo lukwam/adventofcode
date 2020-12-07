@@ -4,6 +4,21 @@ import re
 import sys
 
 
+def get_entries(name):
+    """Get entries separated by blank lines."""
+    entries = []
+    entry = []
+    for i in get_str_input(name):
+        if not i:
+            entries.append(entry)
+            entry = []
+            continue
+        entry.append(i)
+    if entry:
+        entries.append(entry)
+    return entries
+
+
 def get_int_input(name):
     """Get integer input from a multi-line text file."""
     f = open(f"{name}.txt")
@@ -348,6 +363,196 @@ def day5a():
             if seat_id != expected:
                 print(f"Missing seat: {expected}")
         expected = seat_id + 1
+
+
+def day6a():
+    """Day 6a."""
+    items = get_str_input("day6")
+    counts = []
+    group = None
+    for i in items:
+        if not i:
+            counts.append(len(group))
+            print(len(group))
+            group = {}
+        if not group:
+            group = {}
+        for c in list(i):
+            if c in group:
+                group[c] += 1
+            else:
+                group[c] = 1
+    counts.append(len(group))
+    print(len(group))
+    print(counts)
+    total = 0
+    for t in counts:
+        total += t
+    print(f"total: {total}")
+
+
+def day6b():
+    """Day 6a."""
+    items = get_str_input("day6")
+    counts = []
+    group = {}
+
+    count = 0
+    num = 0
+    people = 0
+    for i in items:
+        people += 1
+
+        if not i:
+            tot = people - 1
+            # print(tot)
+            # print(group)
+            for g in group:
+                if group[g] == tot:
+                    count += 1
+            print(count)
+            counts.append(count)
+            count = 0
+            group = {}
+            num = 0
+            people = 0
+            print("")
+
+        for c in list(i):
+            num += 1
+            if c in group:
+                group[c] += 1
+            else:
+                group[c] = 1
+            print(c)
+
+    print(people)
+    counts.append(people)
+    print(counts)
+
+    total = 0
+    for t in counts:
+        total += t
+    print(f"total: {total}")
+
+
+def check_bag(bags, check, color):
+    """Check a single bag."""
+    if check in bags[color]:
+        # print(color)
+        return True
+    for c in bags[color]:
+        if check in bags[c]:
+            # print(c)
+            return True
+
+
+def get_bags(items):
+    """Return a dict of bags from the input."""
+    bags = {}
+    for i in items:
+        result = (re.findall(r"^(.*) bags contain (.*)$", i))
+        color = result[0][0]
+
+        contents = result[0][1]
+
+        bags[color] = {}
+        if contents != "no other bags.":
+            for b in contents.split(","):
+                item = b.strip().strip(".")
+                num = item.split(" ")[0]
+                c = " ".join(item.split(" ")[1:-1])
+                bags[color][c] = num
+    return bags
+
+def day7a():
+    """Day 7a."""
+    check = "shiny gold"
+    items = get_str_input("day7")
+    bags = get_bags(items)
+
+    toplevel = []
+    # total = 0
+    for color in bags:
+        if check in bags[color]:
+            print(f"A {color} bag, which can hold your {check} bag directly.")
+            if color not in toplevel:
+                toplevel.append(color)
+            # total += 1
+
+    for color in bags:
+        for c in bags[color]:
+            if check in bags[c]:
+                if color not in toplevel:
+                    toplevel.append(color)
+
+    for color in bags:
+        for c in bags[color]:
+            if c in toplevel:
+                if color not in toplevel:
+                    toplevel.append(color)
+
+    for color in bags:
+        for c in bags[color]:
+            if c in toplevel:
+                if color not in toplevel:
+                    toplevel.append(color)
+
+    for color in bags:
+        for c in bags[color]:
+            if c in toplevel:
+                if color not in toplevel:
+                    toplevel.append(color)
+
+    for color in bags:
+        for c in bags[color]:
+            if c in toplevel:
+                if color not in toplevel:
+                    toplevel.append(color)
+
+
+    print(f"Total: {len(toplevel)}")
+
+
+    # import json
+    # print(json.dumps(bags, indent=2, sort_keys=True))
+
+    # check top bags
+    # total = 0
+    # for color in bags:
+    #     if check_bag(bags, check, color):
+    #         total += 1
+    # print(f"Total: {total}")
+
+
+def count_bags(bags, color, indent=0):
+    """Count the bags."""
+    if not bags[color]:
+        return 0
+    print(bags[color])
+    count = 0
+    for c in bags[color]:
+        n = int(bags[color][c])
+        count += n
+        print(f"{'  ' * indent}{n} {c} bag(s)")
+        subcount = count_bags(bags, c, indent + 1)
+        count += n * subcount
+
+    return count
+
+
+def day7b():
+    """Day 7a."""
+    check = "shiny gold"
+    items = get_str_input("day7")
+    bags = get_bags(items)
+    import json
+    print(json.dumps(bags, indent=2, sort_keys=True))
+
+    total = count_bags(bags, check)
+
+    print(f"Total: {total}")
+
 
 def main():
     """Main function."""
