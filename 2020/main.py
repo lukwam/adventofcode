@@ -188,35 +188,19 @@ def day6a():
 
 def day6b():
     """Day 6a."""
-    items = helpers.get_input_strings("day6")
-    counts = []
-    group = {}
-    count = 0
-    num = 0
-    people = 0
-    for i in items:
-        people += 1
-        if not i:
-            tot = people - 1
-            for g in group:
-                if group[g] == tot:
-                    count += 1
-            counts.append(count)
-            count = 0
-            group = {}
-            num = 0
-            people = 0
-        for c in list(i):
-            num += 1
-            if c in group:
-                group[c] += 1
-            else:
-                group[c] = 1
-
-    counts.append(people)
+    items = helpers.get_multiline_input("day6")
     total = 0
-    for t in counts:
-        total += t
+    for group in items:
+        n = len(group)
+        qs = {}
+        for p in group:
+            for c in p:
+                if c not in qs:
+                    qs[c] = 0
+                qs[c] += 1
+        for q in qs:
+            if qs[q] == n:
+                total += 1
     print(f"\nTotal: {total}")
 
 
