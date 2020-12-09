@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Advent-of-Code 2020."""
 
 # import json
 import re
@@ -24,7 +25,7 @@ def day1a():
     print(f"\nAnswer: {i} + {j} = 2020; {i} * {j} = {i * j}")
 
 
-def day1b(verbose=False):
+def day1b():
     """Day 1: Report Repair."""
     items = helpers.get_input_integers("day1")
     for i in items:
@@ -245,6 +246,78 @@ def day7b():
     # print(json.dumps(bags, indent=2, sort_keys=True))
     total = helpers.count_bags(check, bags)
     print(f"\nTotal: {total}")
+
+
+#
+# Day 8: Handheld Halting
+#
+def day8a():
+    """Day 8a."""
+    items = helpers.get_input_strings("day8")
+    accumulator = helpers.test_boot_code(items)
+    print(f"\nAccumulator: {accumulator}")
+
+
+def day8b():
+    """Day 8a."""
+    items = helpers.get_input_strings("day8")
+    i = 0
+    while i < len(items):
+        code = items[i]
+        inst, num = code.split(" ")
+        test = False
+        if inst == "jmp":
+            new = "nop"
+            newitems = list(items)
+            newitems[i] = f"{new} {num}"
+            test = True
+        elif inst == "nop":
+            new = "jmp"
+            newitems = list(items)
+            newitems[i] = f"{new} {num}"
+            test = True
+        if test:
+            print(f"Testing row {i}: {inst} -> {new}")
+            accumulator = helpers.test_boot_code(newitems)
+            print(f"Accumulator: {accumulator}")
+        i += 1
+
+
+#
+# Day 9:
+#
+def day9a():
+    """Day 9a."""
+    items = helpers.get_input_integers("day9")
+    n = 0
+    length = 25
+    preamble = items[n:n + length]
+    for item in items[length:]:
+        helpers.check_encoding(preamble, item)
+        n += 1
+        preamble = items[n:n + length]
+
+
+def day9b():
+    """Day 9b."""
+    items = helpers.get_input_integers("day9")
+    value = 105950735
+    length = 2
+    while True:
+        print(f"Length: {length}")
+        start = 0
+        end = length
+        while end <= len(items):
+            group = items[start:end]
+            if sum(group) == value:
+                print("SUCCESS!")
+                print(group)
+                weakness = min(group) + max(group)
+                print(f"Weakness: {weakness} (length: {length}")
+                sys.exit()
+            start += 1
+            end += 1
+        length += 1
 
 
 def main():

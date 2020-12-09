@@ -1,6 +1,7 @@
 """Helpers."""
 
 import re
+import sys
 
 
 #
@@ -14,6 +15,7 @@ def get_input_integers(name):
             integers.append(int(line))
         except Exception as error:
             print(f"ERROR: Failed to convert string to integer: {line}!")
+            print(error)
     return integers
 
 
@@ -41,7 +43,7 @@ def get_multiline_input(name):
     # handle last entry
     if entry:
         entries.append(entry)
-    print(f"Found {len(entries)} lines in puzzle input: {filename}")
+    print(f"Found {len(entries)} entry in puzzle input.")
     return entries
 
 
@@ -208,7 +210,7 @@ def check_seat_row(string, rmin, rmax, verbose=False):
             return rmax
         return check_seat_row("".join(string[1:]), rmid, rmax, verbose)
     else:
-        print(f"ERROR: Bad character!")
+        print("ERROR: Bad character!")
 
 
 def check_seat_col(string, cmin, cmax, verbose=False):
@@ -231,7 +233,7 @@ def check_seat_col(string, cmin, cmax, verbose=False):
             print(f"take the upper half, keeping columns {cmid} through {cmax}")
         return check_seat_col("".join(string[1:]), cmid, cmax)
     else:
-        print(f"ERROR: Bad character!")
+        print("ERROR: Bad character!")
 
 
 #
@@ -276,3 +278,54 @@ def count_bags(color, bags, indent=0):
         subcount = count_bags(c, bags, indent + 1)
         count += n * subcount
     return count
+
+
+#
+# Halting
+#
+def test_boot_code(items):
+    """Test handheld game console boot code."""
+    accumulator = 0
+    done = False
+    n = 0
+    executed = []
+    while not done:
+        if n == len(items):
+            print("Exited successfully!")
+            print(accumulator)
+            sys.exit()
+        if n in executed:
+            print("ERROR: Infinite loop!")
+            return accumulator
+        executed.append(n)
+        code = items[n]
+        inst, num = code.split(" ")
+        num = int(num)
+        if inst == "acc":
+            print(f"add {num}")
+            accumulator += num
+            n += 1
+        elif inst == "jmp":
+            print(f"jump {num}")
+            n += num
+        elif inst == "nop":
+            print("do nothing")
+            n += 1
+
+
+#
+# Encoding
+#
+def check_encoding(preamble, value):
+    """Check a single value for validity."""
+    sums = {}
+    for i in preamble:
+        for j in preamble:
+            if i == j:
+                continue
+            s = i + j
+            if s not in sums:
+                sums[s] = []
+            sums[s].append([i, j])
+    if value not in sums:
+        print(f"ERROR: Invalid entry: {value}")
