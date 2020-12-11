@@ -329,3 +329,99 @@ def check_encoding(preamble, value):
             sums[s].append([i, j])
     if value not in sums:
         print(f"ERROR: Invalid entry: {value}")
+
+
+#
+# Seating System
+#
+def check_seat_state(row, col, data, length, width, limit, recurse=False):
+    """Check the state of a seat."""
+    seat = list(data[row])[col]
+    if seat == ".":
+        return seat
+
+    if recurse:
+        recurse = max(length, width)
+        recurse = 100
+    else:
+        recurse = 1
+
+    occupied = 0
+    for dir in ["nw", "n", "ne", "w", "e", "sw", "s", "se"]:
+        if check_direction(dir, row, col, length, width, data, recurse=recurse):
+            occupied += 1
+
+    if seat == "L" and not occupied:
+        return "#"
+
+    if seat == "#" and occupied >= limit:
+        return "L"
+
+    return seat
+
+
+def check_direction(dir, row, col, length, width, data, recurse=1):
+    """Check if there is a seat in the given direction."""
+    if dir == "nw":
+        r = -1
+        c = -1
+
+    elif dir == "n":
+        r = -1
+        c = 0
+
+    elif dir == "ne":
+        r = -1
+        c = 1
+
+    elif dir == "w":
+        r = 0
+        c = -1
+
+    elif dir == "e":
+        r = 0
+        c = 1
+
+    elif dir == "sw":
+        r = 1
+        c = -1
+
+    elif dir == "s":
+        r = 1
+        c = 0
+
+    elif dir == "se":
+        r = 1
+        c = 1
+
+    dist = 1
+    while (
+        (row + (r * dist) >= 0) and (row + (r * dist) < length) and
+        (col + (c * dist) >= 0) and (col + (c * dist) < width) and
+        dist <= recurse
+    ):
+        r1 = row + (r * dist)
+        c1 = col + (c * dist)
+        char = data[r1][c1]
+        # print(r1, c1, char)
+        if char == "#":
+            return True
+        elif char == "L":
+            return False
+        dist += 1
+    return False
+
+
+def perform_seating(data, length, width, limit, recurse):
+    """Do one round of seating."""
+    new = list(data)
+    r = 0
+    while r < length:
+        c = 0
+        cols = list(data[r])
+        while c < width:
+            cols[c] = check_seat_state(r, c, data, length, width, limit, recurse)
+            c += 1
+        new[r] = "".join(cols)
+        r += 1
+    return new

@@ -2,6 +2,7 @@
 """Advent-of-Code 2020."""
 
 # import json
+import math
 import re
 import sys
 
@@ -302,6 +303,132 @@ def day9b():
             start += 1
             end += 1
         length += 1
+
+
+#
+# Day 10
+#
+def day10a():
+    """Day 10a."""
+    items = helpers.get_input_integers("day10")
+    device = max(items) + 3
+    jolts = sorted(items) + [device]
+
+    ones = 0
+    threes = 0
+    last = 0
+    for n in jolts:
+        diff = n - last
+        if diff == 1:
+            ones += 1
+        elif diff == 3:
+            threes += 1
+        else:
+            print("ERROR: Bad diff!")
+        last = n
+    print(f"{ones} ones x {threes} threes = {ones * threes}")
+
+
+def day10b():
+    """Day 10a."""
+    items = helpers.get_input_integers("day10")
+    device = max(items) + 3
+    jolts = [0] + sorted(items) + [device]
+
+    matrix = []
+    n = 0
+    while n < len(jolts):
+        i = jolts[n]
+        group = [i]
+        while n + 1 < len(jolts) and jolts[n + 1] == i + 1:
+            n += 1
+            i = jolts[n]
+            group.append(i)
+        n += 1
+        matrix.append(group)
+
+    factors = []
+    for row in matrix:
+        print(row)
+        if len(row) < 3:
+            factors.append(1)
+        elif len(row) == 3:
+            factors.append(2)
+        elif len(row) == 4:
+            factors.append(4)
+        elif len(row) == 5:
+            factors.append(7)
+    print(factors)
+    print(f"Arrangements: {math.prod(factors)}")
+
+
+def print_rows(rows):
+    """Print rows."""
+    for row in rows:
+        print(row)
+    print("")
+
+
+def day11a():
+    """Day 11a."""
+    rows = helpers.get_input_strings("day11test")
+    length = len(rows)
+    width = len(rows[0])
+    print(f"Length: {length}, Width: {width}")
+    print_rows(rows)
+
+    limit = 4
+    recurse = False
+
+    done = False
+    i = 0
+    while not done:
+        print(f"\nIteration {i}:\n")
+        new_rows = helpers.perform_seating(rows, length, width, limit, recurse)
+        print_rows(new_rows)
+        if new_rows == rows:
+            done = True
+        rows = new_rows
+        i += 1
+
+    occupied = 0
+    for row in rows:
+        for c in row:
+            if c == "#":
+                occupied += 1
+
+    print(f"Occupied: {occupied}")
+
+
+def day11b():
+    """Day 11a."""
+    rows = helpers.get_input_strings("day11")
+    length = len(rows)
+    width = len(rows[0])
+    print(f"Length: {length}, Width: {width}")
+    print_rows(rows)
+
+    limit = 5
+    recurse = True
+
+    done = False
+    i = 0
+    while not done:
+        print(f"\nIteration {i}:\n")
+        new_rows = helpers.perform_seating(rows, length, width, limit, recurse)
+        print_rows(new_rows)
+        if new_rows == rows:
+            done = True
+        rows = new_rows
+        i += 1
+
+    occupied = 0
+    for row in rows:
+        for c in row:
+            if c == "#":
+                occupied += 1
+
+    print(f"Occupied: {occupied}")
 
 
 def main():
