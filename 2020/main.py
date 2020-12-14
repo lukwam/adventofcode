@@ -2,9 +2,12 @@
 """Advent-of-Code 2020."""
 
 # import json
+from datetime import datetime
+import json
 import math
 import re
 import sys
+import time
 
 import helpers
 
@@ -370,8 +373,8 @@ def print_rows(rows):
 
 
 def day11a():
-    """Day 11a."""
-    rows = helpers.get_input_strings("day11test")
+    """Day 11a: Seating System."""
+    rows = helpers.get_input_strings("day11")
     length = len(rows)
     width = len(rows[0])
     print(f"Length: {length}, Width: {width}")
@@ -397,11 +400,12 @@ def day11a():
             if c == "#":
                 occupied += 1
 
+    print(f"Iterations: {i}")
     print(f"Occupied: {occupied}")
 
 
 def day11b():
-    """Day 11a."""
+    """Day 11b Seating System."""
     rows = helpers.get_input_strings("day11")
     length = len(rows)
     width = len(rows[0])
@@ -428,14 +432,234 @@ def day11b():
             if c == "#":
                 occupied += 1
 
+    print(f"Iterations: {i}")
     print(f"Occupied: {occupied}")
+
+
+def parse_action_a(loc, text):
+    """Return the action."""
+    a = text[0]
+    v = int(text[1:])
+    x, y, d = loc
+    if a == "N":
+        print(f"North {v}")
+        y += v
+    elif a == "S":
+        print(f"South {v}")
+        y -= v
+    elif a == "E":
+        print(f"East {v}")
+        x += v
+    elif a == "W":
+        print(f"West {v}")
+        x -= v
+    elif a == "L":
+        print(f"Left {v}")
+        n = 0
+        while n < v / 90:
+            if d == "E":
+                d = "N"
+            elif d == "N":
+                d = "W"
+            elif d == "W":
+                d = "S"
+            elif d == "S":
+                d = "E"
+            n += 1
+    elif a == "R":
+        print(f"Right {v}")
+        n = 0
+        while n < v / 90:
+            if d == "E":
+                d = "S"
+            elif d == "S":
+                d = "W"
+            elif d == "W":
+                d = "N"
+            elif d == "N":
+                d = "E"
+            n += 1
+    elif a == "F":
+        print(f"Forward {v}")
+        if d == "E":
+            x += v
+        elif d == "S":
+            y -= v
+        elif d == "W":
+            x -= v
+        elif d == "N":
+            y += v
+    else:
+        print(f"ERROR: Bad action: {a}")
+
+    return (x, y, d)
+
+
+def parse_action_b(loc, text):
+    """Return the action."""
+    action = text[0]
+    value = int(text[1:])
+    x, y, a, b = loc
+
+    if action == "N":
+        print(f"North {value}")
+        y += value
+
+    elif action == "S":
+        print(f"South {value}")
+        y -= value
+
+    elif action == "E":
+        print(f"East {value}")
+        x += value
+
+    elif action == "W":
+        print(f"West {value}")
+        x -= value
+
+    elif action == "L":
+        print(f"Left {value}")
+        dx = x - a
+        dy = y - b
+        n = 0
+        while n < value / 90:
+            nx = -dy
+            ny = dx
+            dx = nx
+            dy = ny
+            n += 1
+        x = a + dx
+        y = b + dy
+    elif action == "R":
+        print(f"Right {value}")
+        dx = x - a
+        dy = y - b
+        n = 0
+        while n < value / 90:
+            nx = dy
+            ny = -dx
+            dx = nx
+            dy = ny
+            n += 1
+        x = a + dx
+        y = b + dy
+
+    elif action == "F":
+        print(f"Forward {value}")
+        dx = x - a
+        dy = y - b
+        a = a + dx * value
+        b = b + dy * value
+        x = x + dx * value
+        y = y + dy * value
+
+    else:
+        print(f"ERROR: Bad action: {a}")
+
+    return (x, y, a, b)
+
+
+def day12a():
+    """Day 12a: Rain Risk."""
+    items = helpers.get_input_strings("day12")
+    loc = (0, 0, "E")
+    for item in items:
+        loc = parse_action_a(loc, item)
+    x, y, d = loc
+    final = abs(x) + abs(y)
+    print(f"Answer: {final}")
+
+
+def day12b():
+    """Day 12b: Rain Risk."""
+    items = helpers.get_input_strings("day12")
+    loc = (10, 1, 0, 0)
+    for item in items:
+        loc = parse_action_b(loc, item)
+    x, y, a, b = loc
+    print(f"\nWaypoint: {x}, {y}; Ship: {a}, {b}")
+    answer = abs(a) + abs(b)
+    print(f"\nAnswer: {answer}")
+
+
+def day13a():
+    """Day 13a."""
+    items = helpers.get_input_strings("day13test")
+    est = int(items[0])
+
+    busmap = {}
+    i = 0
+    for x in items[1].split(","):
+        if x != "x":
+            busmap[int(x)] = i
+        i += 1
+    print(est, busmap)
+
+    times = {}
+    for b in busmap:
+        n = round(est / b)
+        t = b * n
+        if t not in times:
+            times[t] = []
+        times[t].append(b)
+        t = b * (n + 1)
+        if t not in times:
+            times[t] = []
+        times[t].append(b)
+
+    for t in sorted(times):
+        if t >= est:
+            b = times[t][0]
+            w = t - est
+            a = b * w
+            print(f"Bus #{b} departs at {t}, which is {w} minutes wait: {b} * {w} = {a}.")
+            print(f"Answer: {a}")
+            break
+
+
+def day13b():
+    """Day 13b: Shuttle Search."""
+    items = helpers.get_input_strings("day13")
+
+    def get_valid_busses(t, busmap):
+        """Return a list of busses that are valid for a given time."""
+        valid = []
+        for b in sorted(busmap, reverse=True):
+            n = busmap[b]
+            if b and (t + n) % b == 0:
+                valid.append(b)
+        return valid
+
+    busmap = {}
+    i = 0
+    for x in items[1].split(","):
+        if x != "x":
+            busmap[int(x)] = i
+        i += 1
+
+    loop = 0
+    # step = max(busmap)
+    step = 1
+    t = 0
+    while True:
+        loop += 1
+        t += step
+        v = get_valid_busses(t, busmap)
+        print(f"{t}: {v}")
+        if v:
+            step = math.prod(v)
+        if len(v) == len(busmap):
+            break
+    print(f"Loops: {loop}")
 
 
 def main():
     """Main function."""
     if len(sys.argv):
         function = sys.argv[-1]
+        startTime = datetime.now()
         globals()[function]()
+        print(f"\nRuntime: {datetime.now() - startTime}")
     else:
         print("Hello World!")
 
