@@ -2,6 +2,8 @@
 import math
 import sys
 
+import helpers
+
 
 def get_entries(name):
     """Get entries separated by blank lines."""
@@ -67,105 +69,132 @@ def day1b():
     print(f"Total: {total}")
 
 
+class Computer:
+    """Computer class."""
+
+    def __init__(self, intcode):
+        """Initialize a computer."""
+        self.memory = []
+        for i in intcode.split(","):
+            self.memory.append(int(i))
+        print(f"Memory: {self.memory}")
+
+    def add(self, a, b, c):
+        """Add two numbers a and b and store value in c."""
+        x = self.memory[a]
+        y = self.memory[b]
+        self.memory[c] = x + y
+        print(f"{x} + {y} = {x + y} => {c}")
+
+    def multiply(self, a, b, c):
+        """Multiply two numbers a and b and store value in c."""
+        x = self.memory[a]
+        y = self.memory[b]
+        self.memory[c] = x * y
+        print(f"{x} * {y} = {x * y} => {c}")
+
+    def run(self, noun, verb):
+        """Run the program."""
+        self.memory[1] = noun
+        self.memory[2] = verb
+        i = 0
+        while True:
+            opcode = self.memory[i]
+            print(f"Position: {i}, Opcode: {opcode}")
+
+            if opcode == 1:
+                a = self.memory[i + 1]
+                b = self.memory[i + 2]
+                c = self.memory[i + 3]
+                self.add(a, b, c)
+                i += 4
+            elif opcode == 2:
+                a = self.memory[i + 1]
+                b = self.memory[i + 2]
+                c = self.memory[i + 3]
+                self.multiply(a, b, c)
+                i += 4
+            elif opcode == 99:
+                print("Exiting.")
+                return
+
+            print(f"Memory: {self.memory}")
+
+
 def day2a():
     """Day 2a."""
     items = get_str_input("day2")
-    for i in items:
-        integers = []
-        for num in i.split(","):
-            integers.append(int(num))
-        integers[1] = 12
-        integers[2] = 2
-
-        n = 0
-        while 1:
-            opcode = integers[n]
-            if opcode == 1:
-                k1 = integers[n + 1]
-                k2 = integers[n + 2]
-                k3 = integers[n + 3]
-                # print(f"Add opcode {k1} + {k2} and store in {k3}")
-                value1 = integers[k1]
-                value2 = integers[k2]
-                # value3 = integers[k3]
-                integers[k3] = value1 + value2
-                # print(integers)
-                n += 4
-
-            elif opcode == 2:
-                k1 = integers[n + 1]
-                k2 = integers[n + 2]
-                k3 = integers[n + 3]
-                # print(f"Add opcode {k1} + {k2} and store in {k3}")
-                value1 = integers[k1]
-                value2 = integers[k2]
-                # value3 = integers[k3]
-                integers[k3] = value1 * value2
-                # print(integers)
-                n += 4
-
-            elif opcode == 99:
-                print(integers[0])
-                # print("EXITING.")
-                return
-            else:
-                print("ERROR")
+    noun = 12
+    verb = 2
+    computer = Computer(items[0])
+    computer.run(noun, verb)
+    print(f"Position 0: {computer.memory[0]}")
 
 
 def day2b():
     """Day 2b."""
-    items = get_str_input("day2")
-    for i in items:
-        integers = []
-        for num in i.split(","):
-            integers.append(int(num))
+    output = 19690720
 
-        for j in range(0, 99, 1):
-            print(f"J = {j}")
-            for k in range(0, 99, 1):
-                print(f"K = {k}")
-                integers[1] = j
-                integers[2] = k
-                n = 0
-                done = False
-                while not done:
-                    opcode = integers[n]
-                    if opcode == 1:
-                        k1 = integers[n + 1]
-                        k2 = integers[n + 2]
-                        k3 = integers[n + 3]
-                        # print(f"Add opcode {k1} + {k2} and store in {k3}")
-                        value1 = integers[k1]
-                        value2 = integers[k2]
-                        # value3 = integers[k3]
-                        integers[k3] = value1 + value2
-                        # print(integers)
-                        n += 4
+    items = get_str_input("day2test")
 
-                    elif opcode == 2:
-                        k1 = integers[n + 1]
-                        k2 = integers[n + 2]
-                        k3 = integers[n + 3]
-                        # print(f"Add opcode {k1} + {k2} and store in {k3}")
-                        value1 = integers[k1]
-                        value2 = integers[k2]
-                        # value3 = integers[k3]
-                        integers[k3] = value1 * value2
-                        # print(integers)
-                        n += 4
+    memory = []
+    for i in items[0].split(","):
+        memory.append(int(i))
 
-                    elif opcode == 99:
-                        print(integers[0])
-                        if integers[0] == 19690720:
-                            print(f"Noun: {j}, Verb: {k}")
-                            return
-                        done = True
-                        # print("EXITING.")
-                    #     break
-                    # else:
-                    #     print("ERROR")
-                    #     done = True
-                    #     return
+    print(memory)
+
+    # for i in items:
+        # print(i)
+    #     integers = []
+    #     for num in i.split(","):
+    #         integers.append(int(num))
+
+    #     for j in range(0, 99, 1):
+    #         print(f"J = {j}")
+    #         for k in range(0, 99, 1):
+    #             print(f"K = {k}")
+    #             integers[1] = j
+    #             integers[2] = k
+    #             n = 0
+    #             done = False
+    #             while not done:
+    #                 opcode = integers[n]
+    #                 if opcode == 1:
+    #                     k1 = integers[n + 1]
+    #                     k2 = integers[n + 2]
+    #                     k3 = integers[n + 3]
+    #                     # print(f"Add opcode {k1} + {k2} and store in {k3}")
+    #                     value1 = integers[k1]
+    #                     value2 = integers[k2]
+    #                     # value3 = integers[k3]
+    #                     integers[k3] = value1 + value2
+    #                     # print(integers)
+    #                     n += 4
+
+    #                 elif opcode == 2:
+    #                     k1 = integers[n + 1]
+    #                     k2 = integers[n + 2]
+    #                     k3 = integers[n + 3]
+    #                     # print(f"Add opcode {k1} + {k2} and store in {k3}")
+    #                     value1 = integers[k1]
+    #                     value2 = integers[k2]
+    #                     # value3 = integers[k3]
+    #                     integers[k3] = value1 * value2
+    #                     # print(integers)
+    #                     n += 4
+
+    #                 elif opcode == 99:
+    #                     print(integers[0])
+    #                     if integers[0] == 19690720:
+    #                         print(f"Noun: {j}, Verb: {k}")
+    #                         return
+    #                     done = True
+    #                     # print("EXITING.")
+    #                 #     break
+    #                 # else:
+    #                 #     print("ERROR")
+    #                 #     done = True
+    #                 #     return
 
 
 def main():

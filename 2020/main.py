@@ -3,6 +3,7 @@
 
 # import json
 from datetime import datetime
+import itertools
 import json
 import math
 import re
@@ -651,6 +652,174 @@ def day13b():
         if len(v) == len(busmap):
             break
     print(f"Loops: {loop}")
+
+
+def day14a():
+    """Day 14a."""
+    lines = helpers.get_input_strings("day14")
+    mask = []
+    mem = {}
+    print(f"Initialize memory: {mem}")
+
+    def apply_mask(binary):
+        """Apply the mask to a binary."""
+        binary_list = []
+        for i in list(binary):
+            binary_list.append(int(i))
+        n = 0
+        for x in mask:
+            if x != "X":
+                binary_list[n] = x
+            n += 1
+        binary = ''.join([str(x) for x in binary_list])
+        return binary
+
+    def get_mask_string(mask):
+        """Return the mask as a string."""
+        return "".join([str(x) for x in mask])
+
+    def save_value(integer, loc):
+        """Apply the mask."""
+        binary = '{0:036b}'.format(integer)
+        print(f"value:   {binary}  (decimal {integer})")
+        print(f"mask:    {get_mask_string(mask)}")
+        result = apply_mask(binary)
+        value = int(result, 2)
+        print(f"result:  {result}  (decimal {value})")
+        mem[loc] = value
+
+    def get_mask(mask_string):
+        """Set the mask."""
+        mask = []
+        maskmap = {}
+        i = 0
+        for c in list(mask_string):
+            if c == "X":
+                mask.append("X")
+            else:
+                mask.append(int(c))
+                maskmap[int(c)] = i
+            i += 1
+        return mask
+
+    for line in lines:
+        print()
+        print(line)
+
+        if re.match(r"mask = .*", line):
+            mask_string = line.replace("mask = ", "")
+            mask = get_mask(mask_string)
+            print(f"Initialize mask: {mask}")
+
+        elif re.match(r"mem\[.*\] = .*", line):
+            loc, integer = line.replace("mem[", "").replace("]", "").replace(" =", "").split(" ")
+            save_value(int(integer), int(loc))
+
+    print(f"Sum: {sum(mem.values())}")
+    # print(mask)
+    # print(mem)
+
+
+def day14b():
+    """Day 14b."""
+    lines = helpers.get_input_strings("day14")
+    mask = []
+    mem = {}
+    print(f"Initialize memory: {mem}")
+
+    def apply_mask(location):
+        """Apply the mask to a binary."""
+        binary = '{0:036b}'.format(location)
+        print(f"address: {binary}  (decimal {location})")
+        binary_list = []
+        for i in list(binary):
+            binary_list.append(int(i))
+
+        n = 0
+        for x in mask:
+            if x == 1:
+                binary_list[n] = 1
+            if x == "X":
+                binary_list[n] = "X"
+            n += 1
+        result = ''.join([str(x) for x in binary_list])
+        print(f"mask:    {get_mask_string(mask)}")
+        print(f"result:  {result}")
+        return result
+
+    def get_permutations(n):
+        """Return all the itertaions of 0 and 1 for n items."""
+        bits = ["0", "1"]
+        if n == 1:
+            return bits
+        permutations = []
+        for x in get_permutations(n - 1):
+            for y in bits:
+                permutations.append(x + y)
+        return permutations
+
+    def get_locations(result):
+        """Return a list of locations based on the floating bits in a result."""
+        locations = []
+        floats = []
+        fmtstring = ""
+        n = 0
+        f = 0
+        while n < len(result):
+            x = result[n]
+            if x == "X":
+                floats.append(n)
+                fmtstring += "%s"
+                f += 1
+            else:
+                fmtstring += str(x)
+            n += 1
+        locations = []
+        for p in get_permutations(len(floats)):
+            binary = fmtstring % tuple(list(p))
+            locations.append(int(binary, 2))
+        return locations
+
+    def get_mask_string(mask):
+        """Return the mask as a string."""
+        return "".join([str(x) for x in mask])
+
+    def save_value(integer, result):
+        """Apply the mask."""
+        print(result, integer)
+        locations = get_locations(result)
+        for loc in locations:
+            mem[loc] = integer
+
+    def get_mask(mask_string):
+        """Set the mask."""
+        mask = []
+        maskmap = {}
+        i = 0
+        for c in list(mask_string):
+            if c == "X":
+                mask.append("X")
+            else:
+                mask.append(int(c))
+                maskmap[int(c)] = i
+            i += 1
+        return mask
+
+    for line in lines:
+        print()
+        print(line)
+
+        if re.match(r"mask = .*", line):
+            mask_string = line.replace("mask = ", "")
+            mask = get_mask(mask_string)
+            print(f"Initialize mask: {mask}")
+
+        elif re.match(r"mem\[.*\] = .*", line):
+            loc, integer = line.replace("mem[", "").replace("]", "").replace(" =", "").split(" ")
+            result = apply_mask(int(loc))
+            save_value(int(integer), result)
+
+    print(f"Sum: {sum(mem.values())}")
 
 
 def main():
