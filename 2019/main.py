@@ -1,5 +1,6 @@
 """Advent of Code 2019."""
 import math
+import re
 import sys
 
 import helpers
@@ -166,7 +167,7 @@ def create_path(path):
     pathmap[start] = "o"
     for i in instructions:
         dir = i[0]
-        dist = int(i[1])
+        dist = int(i[1:])
 
         if dir == "R":
             n = 0
@@ -301,18 +302,18 @@ def get_distance(a, b):
 
 def day3a():
     """Day 3a."""
-    items = get_str_input("day3test")
+    items = get_str_input("day3")
     first = items[0]
     second = items[1]
     first_path = create_path(first)
     second_path = create_path(second)
 
-    draw_path(first_path)
+    # draw_path(first_path)
     print("")
-    draw_path(second_path)
+    # draw_path(second_path)
     print("")
     path = merge_paths(first_path, second_path)
-    draw_path(path)
+    # draw_path(path)
 
     start = None
     for c in path:
@@ -333,6 +334,32 @@ def day3a():
 
 def day3b():
     """Day 3b."""
+
+
+def day4a():
+    """Day 4."""
+    items = helpers.get_input_strings("day4")
+    start, stop = items[0].split("-")
+    print(start, stop)
+
+    count = 0
+    for i in range(int(start), int(stop) + 1):
+        string = str(i)
+
+        valid = False
+        for c in [str(x) for x in range(0, 10)]:
+            if c * 2 in string and c * 3 not in string:
+                valid = True
+        if not valid:
+            continue
+
+        # check for sorted
+        if list(string) != sorted(string):
+            continue
+
+        print(i)
+        count += 1
+    print(f"Count: {count}")
 
 
 def main():
