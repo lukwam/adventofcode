@@ -716,8 +716,6 @@ def day14a():
             save_value(int(integer), int(loc))
 
     print(f"Sum: {sum(mem.values())}")
-    # print(mask)
-    # print(mem)
 
 
 def day14b():
@@ -820,6 +818,69 @@ def day14b():
             save_value(int(integer), result)
 
     print(f"Sum: {sum(mem.values())}")
+
+
+# def list_rindex(li, x):
+#     for i in reversed(range(len(li))):
+#         if li[i] == x:
+#             return i
+#     raise ValueError("{} is not in list".format(x))
+
+def day15a():
+    """Day 15a."""
+    items = helpers.get_input_strings("day15")[0].split(",")
+    print(items)
+
+    # final = 2020
+    final = 30000000
+
+    smap = {}
+    # spoken = []
+
+    last = None
+    n = 1
+    for i in items:
+        i = int(i)
+        # print(f"{n}: {i}")
+        # pmap = dict(smap)
+        smap[i] = [n]
+        # print(f"set {i} t")
+        last = i
+        n += 1
+
+    # print(json.dumps(smap, indent=2, sort_keys=True))
+    while n <= final:
+        # print(json.dumps(smap, indent=2, sort_keys=True))
+        if not n % 100000:
+            print(n)
+        # print(f"Last: {last} ({type(last)})")
+
+        if last in smap and len(smap[last]) == 1:
+            i = 0
+        else:
+            # print(smap[last])
+            old = smap[last].pop(0)
+            # print(f"old: {old}")
+            i = n - old - 1
+
+        # print(f"{n}: {i}")
+        # pmap = dict(smap)
+        # smap[i].insert(0, n)
+        if i not in smap:
+            smap[i] = []
+        smap[i].append(n)
+        last = i
+        n += 1
+        # time.sleep(1)
+        # print("")
+
+    print(last)
+
+
+def day15b():
+    """Day 15b."""
+    items = helpers.get_input_strings("day15test")
+
 
 
 def main():

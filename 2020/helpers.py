@@ -43,7 +43,7 @@ def get_multiline_input(name):
     # handle last entry
     if entry:
         entries.append(entry)
-    print(f"Found {len(entries)} entry in puzzle input.")
+    print(f"Found {len(entries)} entries in puzzle input.")
     return entries
 
 
