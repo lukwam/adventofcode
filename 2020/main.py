@@ -882,6 +882,375 @@ def day15b():
     items = helpers.get_input_strings("day15test")
 
 
+def day16a():
+    """Day 16a."""
+    items = helpers.get_multiline_input("day16")
+    fields = items[0]
+    my_ticket = items[1]
+    nearby_tickets = items[2]
+
+    fieldmap = {}
+    rangemap = {}
+    for f in fields:
+        field, rules = f.split(":")
+        r = rules.strip().split(" or ")
+        print(field, r)
+        fieldmap[field] = r
+        for rule in r:
+            start, end = rule.split("-")
+            for i in range(int(start), int(end) + 1):
+                if i not in rangemap:
+                    rangemap[i] = []
+                rangemap[i].append(field)
+
+    count = 0
+    total = 0
+    for t in nearby_tickets[1:]:
+        for f in t.split(","):
+            if int(f) not in rangemap:
+                total += int(f)
+                count += 1
+
+    print(f"Bad Tickets: {count}, Error Rate: {total}")
+
+
+def day16b():
+    """Day 16b."""
+    items = helpers.get_multiline_input("day16")
+    fields = items[0]
+    my_ticket = items[1]
+    nearby_tickets = items[2]
+
+    fieldmap = {}
+    rangemap = {}
+    for f in fields:
+        field, rules = f.split(":")
+        r = rules.strip().split(" or ")
+        print(field, r)
+        fieldmap[field] = r
+        for rule in r:
+            start, end = rule.split("-")
+            for i in range(int(start), int(end) + 1):
+                if i not in rangemap:
+                    rangemap[i] = []
+                rangemap[i].append(field)
+
+    count = 0
+    total = 0
+    valid_tickets = []
+    for t in nearby_tickets[1:]:
+        valid = True
+        for f in t.split(","):
+            if int(f) not in rangemap:
+                total += int(f)
+                count += 1
+                valid = False
+        if valid:
+            valid_tickets.append(t)
+
+    print(f"{len(valid_tickets)} valid tickets.")
+    schema = {}
+
+    for t in valid_tickets:
+        values = [int(v) for v in t.split(",")]
+        n = 0
+        while n < len(values):
+            v = values[n]
+            s = set(rangemap[v])
+            if n not in schema:
+                schema[n] = list(s)
+            else:
+                schema[n] = list(set(schema[n]).intersection(s))
+            print(v, schema[n])
+            n += 1
+
+    final = []
+
+    while len(final) != len(schema):
+        for n in schema:
+            fields = schema[n]
+            if len(fields) == 1:
+                field = fields[0]
+                if field not in final:
+                    print(f"Found: {field} [{n}]")
+                    final.append(field)
+            else:
+                for field in list(fields):
+                    if field in final:
+                        print(f"Removed {field} [{n}")
+                        fields.remove(field)
+
+    print("Schema:")
+    print(json.dumps(schema, indent=2, sort_keys=True))
+
+    me = [int(x) for x in my_ticket[1].split(",")]
+    print(me)
+    departure = 1
+    for n in schema:
+        f = schema[n][0]
+        if f.startswith("departure"):
+            departure *= me[n]
+
+    print(departure)
+
+
+def print_grid(cubes):
+    """Print cubes."""
+    xmin = None
+    xmax = None
+    ymin = None
+    ymax = None
+    zmin = None
+    zmax = None
+    for cube in cubes:
+        x, y, z = cube
+
+        if xmin is None:
+            xmin = x
+        else:
+            if x < xmin:
+                xmin = x
+
+        if xmax is None:
+            xmax = x
+        else:
+            if x > xmax:
+                xmax = x
+
+        if ymin is None:
+            ymin = y
+        else:
+            if y < ymin:
+                ymin = y
+
+        if ymax is None:
+            ymax = y
+        else:
+            if y > ymax:
+                ymax = y
+
+        if zmin is None:
+            zmin = z
+        else:
+            if z < zmin:
+                zmin = z
+
+        if zmax is None:
+            zmax = z
+        else:
+            if z > zmax:
+                zmax = z
+
+    for z in range(zmin, zmax + 1):
+        print(f"\nz={z}")
+        for y in range(ymin, ymax + 1):
+            row = []
+            for x in range(xmin, xmax + 1):
+                c = (x, y, z)
+                if c in cubes:
+                    row.append(cubes[c])
+            print("".join(row))
+
+
+def get_active_neighbors(c, cubes):
+    """Return the number of active neighbors for a cube."""
+    neighbors = []
+    x, y, z = c
+
+    # plane above
+    # row above
+    neighbors.append((x - 1, y - 1, z - 1))
+    neighbors.append((x, y - 1, z - 1))
+    neighbors.append((x + 1, y - 1, z - 1))
+    # same row
+    neighbors.append((x - 1, y, z - 1))
+    neighbors.append((x, y, z - 1))
+    neighbors.append((x + 1, y, z - 1))
+    # row below
+    neighbors.append((x - 1, y + 1, z - 1))
+    neighbors.append((x, y + 1, z - 1))
+    neighbors.append((x + 1, y + 1, z - 1))
+
+    # same plane
+    # row above
+    neighbors.append((x - 1, y - 1, z))
+    neighbors.append((x, y - 1, z))
+    neighbors.append((x + 1, y - 1, z))
+    # same row
+    neighbors.append((x - 1, y, z))
+    neighbors.append((x + 1, y, z))
+    # row below
+    neighbors.append((x - 1, y + 1, z))
+    neighbors.append((x, y + 1, z))
+    neighbors.append((x + 1, y + 1,))
+
+    # plane below
+    # row above
+    neighbors.append((x - 1, y - 1, z + 1))
+    neighbors.append((x, y - 1, z + 1))
+    neighbors.append((x + 1, y - 1, z + 1))
+    # same row
+    neighbors.append((x - 1, y, z + 1))
+    neighbors.append((x, y, z + 1))
+    neighbors.append((x + 1, y, z + 1))
+    # row below
+    neighbors.append((x - 1, y + 1, z + 1))
+    neighbors.append((x, y + 1, z + 1))
+    neighbors.append((x + 1, y + 1, z + 1))
+    # print(f"Neighbors: {len(set(neighbors))}")
+
+    # for neighbor in sorted(neighbors):
+    #     print(neighbor)
+    active = []
+    for n in neighbors:
+        if n in cubes and cubes[n] == "#":
+            active.append(n)
+    return len(active)
+
+
+def expand_cubes(cubes):
+    """Print cubes."""
+    xmin = None
+    xmax = None
+    ymin = None
+    ymax = None
+    zmin = None
+    zmax = None
+    for cube in cubes:
+        x, y, z = cube
+
+        if xmin is None:
+            xmin = x
+        else:
+            if x < xmin:
+                xmin = x
+
+        if xmax is None:
+            xmax = x
+        else:
+            if x > xmax:
+                xmax = x
+
+        if ymin is None:
+            ymin = y
+        else:
+            if y < ymin:
+                ymin = y
+
+        if ymax is None:
+            ymax = y
+        else:
+            if y > ymax:
+                ymax = y
+
+        if zmin is None:
+            zmin = z
+        else:
+            if z < zmin:
+                zmin = z
+
+        if zmax is None:
+            zmax = z
+        else:
+            if z > zmax:
+                zmax = z
+
+    for z in range(zmin - 1, zmax + 2):
+        print(f"\nz={z}")
+        for y in range(ymin - 1, ymax + 2):
+            for x in range(xmin - 1, xmax + 2):
+                c = (x, y, z)
+                if c not in cubes:
+                    cubes[c] = "."
+    return cubes
+
+
+def run_conway_cubes(cubes):
+    """Run a single cycle of the conway cube rules."""
+    newcubes = {}
+    cubes = expand_cubes(cubes)
+    for c in cubes:
+        v = cubes[c]
+
+        if v == "#":
+            if get_active_neighbors(c, cubes) in [2, 3]:
+                newcubes[c] = "#"
+            else:
+                newcubes[c] = "."
+
+        elif v == ".":
+            if get_active_neighbors(c, cubes) == 3:
+                newcubes[c] = "#"
+            else:
+                newcubes[c] = "."
+    return newcubes
+
+
+def day17a():
+    """Day 17a."""
+    items = helpers.get_input_strings("day17")
+
+    cubes = {}
+
+    y = 0
+    z = 0
+    while y < len(items):
+        row = list(items[y])
+        x = 0
+        while x < len(row):
+            cubes[(x, y, z)] = row[x]
+            x += 1
+        y += 1
+
+    for c in cubes:
+        print(c, cubes[c])
+
+    print_grid(cubes)
+
+    cubes = run_conway_cubes(cubes)
+    print_grid(cubes)
+
+    cubes = run_conway_cubes(cubes)
+    print_grid(cubes)
+
+
+def day17b():
+    """Day 17b."""
+    items = helpers.get_input_strings("day17test")
+
+
+def evaluate_expression(expression):
+    """Evaluate a single expression and return the result."""
+    while len(expression.split(" ")) > 3:
+        print(expression)
+        if "(" in expression:
+            popen = expression.rfind("(")
+            pclose = popen + expression[popen:].find(")")
+            sub = expression[popen + 1:pclose]
+            value = evaluate_expression(sub)
+            expression = expression[:popen] + str(value) + expression[pclose + 1:]
+        else:
+            items = expression.split(" ")
+            exp = " ".join(items[:3])
+            rest = items[3:]
+            items = [str(eval(exp))] + rest
+            expression = " ".join(items)
+    return eval(expression)
+
+
+def day18a():
+    """Day 18a."""
+    items = helpers.get_input_strings("day18")
+    total = 0
+    for expression in items:
+        total += evaluate_expression(expression)
+    print(f"Total: {total}")
+
+
+def day18b():
+    """Day 18a."""
+    items = helpers.get_input_strings("day18test")
+
 
 def main():
     """Main function."""
