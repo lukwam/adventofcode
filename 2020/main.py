@@ -366,20 +366,13 @@ def day10b():
     print(f"Arrangements: {math.prod(factors)}")
 
 
-def print_rows(rows):
-    """Print rows."""
-    for row in rows:
-        print(row)
-    print("")
-
-
 def day11a():
     """Day 11a: Seating System."""
     rows = helpers.get_input_strings("day11")
     length = len(rows)
     width = len(rows[0])
     print(f"Length: {length}, Width: {width}")
-    print_rows(rows)
+    helpers.print_rows(rows)
 
     limit = 4
     recurse = False
@@ -389,7 +382,7 @@ def day11a():
     while not done:
         print(f"\nIteration {i}:\n")
         new_rows = helpers.perform_seating(rows, length, width, limit, recurse)
-        print_rows(new_rows)
+        helpers.print_rows(new_rows)
         if new_rows == rows:
             done = True
         rows = new_rows
@@ -411,7 +404,7 @@ def day11b():
     length = len(rows)
     width = len(rows[0])
     print(f"Length: {length}, Width: {width}")
-    print_rows(rows)
+    helpers.print_rows(rows)
 
     limit = 5
     recurse = True
@@ -421,7 +414,7 @@ def day11b():
     while not done:
         print(f"\nIteration {i}:\n")
         new_rows = helpers.perform_seating(rows, length, width, limit, recurse)
-        print_rows(new_rows)
+        helpers.print_rows(new_rows)
         if new_rows == rows:
             done = True
         rows = new_rows
@@ -437,135 +430,12 @@ def day11b():
     print(f"Occupied: {occupied}")
 
 
-def parse_action_a(loc, text):
-    """Return the action."""
-    a = text[0]
-    v = int(text[1:])
-    x, y, d = loc
-    if a == "N":
-        print(f"North {v}")
-        y += v
-    elif a == "S":
-        print(f"South {v}")
-        y -= v
-    elif a == "E":
-        print(f"East {v}")
-        x += v
-    elif a == "W":
-        print(f"West {v}")
-        x -= v
-    elif a == "L":
-        print(f"Left {v}")
-        n = 0
-        while n < v / 90:
-            if d == "E":
-                d = "N"
-            elif d == "N":
-                d = "W"
-            elif d == "W":
-                d = "S"
-            elif d == "S":
-                d = "E"
-            n += 1
-    elif a == "R":
-        print(f"Right {v}")
-        n = 0
-        while n < v / 90:
-            if d == "E":
-                d = "S"
-            elif d == "S":
-                d = "W"
-            elif d == "W":
-                d = "N"
-            elif d == "N":
-                d = "E"
-            n += 1
-    elif a == "F":
-        print(f"Forward {v}")
-        if d == "E":
-            x += v
-        elif d == "S":
-            y -= v
-        elif d == "W":
-            x -= v
-        elif d == "N":
-            y += v
-    else:
-        print(f"ERROR: Bad action: {a}")
-
-    return (x, y, d)
-
-
-def parse_action_b(loc, text):
-    """Return the action."""
-    action = text[0]
-    value = int(text[1:])
-    x, y, a, b = loc
-
-    if action == "N":
-        print(f"North {value}")
-        y += value
-
-    elif action == "S":
-        print(f"South {value}")
-        y -= value
-
-    elif action == "E":
-        print(f"East {value}")
-        x += value
-
-    elif action == "W":
-        print(f"West {value}")
-        x -= value
-
-    elif action == "L":
-        print(f"Left {value}")
-        dx = x - a
-        dy = y - b
-        n = 0
-        while n < value / 90:
-            nx = -dy
-            ny = dx
-            dx = nx
-            dy = ny
-            n += 1
-        x = a + dx
-        y = b + dy
-    elif action == "R":
-        print(f"Right {value}")
-        dx = x - a
-        dy = y - b
-        n = 0
-        while n < value / 90:
-            nx = dy
-            ny = -dx
-            dx = nx
-            dy = ny
-            n += 1
-        x = a + dx
-        y = b + dy
-
-    elif action == "F":
-        print(f"Forward {value}")
-        dx = x - a
-        dy = y - b
-        a = a + dx * value
-        b = b + dy * value
-        x = x + dx * value
-        y = y + dy * value
-
-    else:
-        print(f"ERROR: Bad action: {a}")
-
-    return (x, y, a, b)
-
-
 def day12a():
     """Day 12a: Rain Risk."""
     items = helpers.get_input_strings("day12")
     loc = (0, 0, "E")
     for item in items:
-        loc = parse_action_a(loc, item)
+        loc = helpers.parse_action_a(loc, item)
     x, y, d = loc
     final = abs(x) + abs(y)
     print(f"Answer: {final}")
@@ -576,7 +446,7 @@ def day12b():
     items = helpers.get_input_strings("day12")
     loc = (10, 1, 0, 0)
     for item in items:
-        loc = parse_action_b(loc, item)
+        loc = helpers.parse_action_b(loc, item)
     x, y, a, b = loc
     print(f"\nWaypoint: {x}, {y}; Ship: {a}, {b}")
     answer = abs(a) + abs(b)
@@ -584,8 +454,8 @@ def day12b():
 
 
 def day13a():
-    """Day 13a."""
-    items = helpers.get_input_strings("day13test")
+    """Day 13a: Shuttle Search."""
+    items = helpers.get_input_strings("day13")
     est = int(items[0])
 
     busmap = {}
@@ -639,7 +509,6 @@ def day13b():
         i += 1
 
     loop = 0
-    # step = max(busmap)
     step = 1
     t = 0
     while True:
@@ -820,75 +689,25 @@ def day14b():
     print(f"Sum: {sum(mem.values())}")
 
 
-# def list_rindex(li, x):
-#     for i in reversed(range(len(li))):
-#         if li[i] == x:
-#             return i
-#     raise ValueError("{} is not in list".format(x))
-
 def day15a():
     """Day 15a."""
     items = helpers.get_input_strings("day15")[0].split(",")
     print(items)
-
-    # final = 2020
-    final = 30000000
-
-    smap = {}
-    # spoken = []
-
-    last = None
-    n = 1
-    for i in items:
-        i = int(i)
-        # print(f"{n}: {i}")
-        # pmap = dict(smap)
-        smap[i] = [n]
-        # print(f"set {i} t")
-        last = i
-        n += 1
-
-    # print(json.dumps(smap, indent=2, sort_keys=True))
-    while n <= final:
-        # print(json.dumps(smap, indent=2, sort_keys=True))
-        if not n % 100000:
-            print(n)
-        # print(f"Last: {last} ({type(last)})")
-
-        if last in smap and len(smap[last]) == 1:
-            i = 0
-        else:
-            # print(smap[last])
-            old = smap[last].pop(0)
-            # print(f"old: {old}")
-            i = n - old - 1
-
-        # print(f"{n}: {i}")
-        # pmap = dict(smap)
-        # smap[i].insert(0, n)
-        if i not in smap:
-            smap[i] = []
-        smap[i].append(n)
-        last = i
-        n += 1
-        # time.sleep(1)
-        # print("")
-
-    print(last)
+    print(helpers.speak_numbers(items, 2020))
 
 
 def day15b():
     """Day 15b."""
-    items = helpers.get_input_strings("day15test")
+    items = helpers.get_input_strings("day15")[0].split(",")
+    print(items)
+    print(helpers.speak_numbers(items, 30000000))
 
 
 def day16a():
     """Day 16a."""
     items = helpers.get_multiline_input("day16")
     fields = items[0]
-    my_ticket = items[1]
     nearby_tickets = items[2]
-
     fieldmap = {}
     rangemap = {}
     for f in fields:
@@ -902,7 +721,6 @@ def day16a():
                 if i not in rangemap:
                     rangemap[i] = []
                 rangemap[i].append(field)
-
     count = 0
     total = 0
     for t in nearby_tickets[1:]:
@@ -910,7 +728,6 @@ def day16a():
             if int(f) not in rangemap:
                 total += int(f)
                 count += 1
-
     print(f"Bad Tickets: {count}, Error Rate: {total}")
 
 
@@ -994,224 +811,24 @@ def day16b():
     print(departure)
 
 
-def print_grid(cubes):
-    """Print cubes."""
-    xmin = None
-    xmax = None
-    ymin = None
-    ymax = None
-    zmin = None
-    zmax = None
-    for cube in cubes:
-        x, y, z = cube
-
-        if xmin is None:
-            xmin = x
-        else:
-            if x < xmin:
-                xmin = x
-
-        if xmax is None:
-            xmax = x
-        else:
-            if x > xmax:
-                xmax = x
-
-        if ymin is None:
-            ymin = y
-        else:
-            if y < ymin:
-                ymin = y
-
-        if ymax is None:
-            ymax = y
-        else:
-            if y > ymax:
-                ymax = y
-
-        if zmin is None:
-            zmin = z
-        else:
-            if z < zmin:
-                zmin = z
-
-        if zmax is None:
-            zmax = z
-        else:
-            if z > zmax:
-                zmax = z
-
-    for z in range(zmin, zmax + 1):
-        print(f"\nz={z}")
-        for y in range(ymin, ymax + 1):
-            row = []
-            for x in range(xmin, xmax + 1):
-                c = (x, y, z)
-                if c in cubes:
-                    row.append(cubes[c])
-            print("".join(row))
-
-
-def get_active_neighbors(c, cubes):
-    """Return the number of active neighbors for a cube."""
-    neighbors = []
-    x, y, z = c
-
-    # plane above
-    # row above
-    neighbors.append((x - 1, y - 1, z - 1))
-    neighbors.append((x, y - 1, z - 1))
-    neighbors.append((x + 1, y - 1, z - 1))
-    # same row
-    neighbors.append((x - 1, y, z - 1))
-    neighbors.append((x, y, z - 1))
-    neighbors.append((x + 1, y, z - 1))
-    # row below
-    neighbors.append((x - 1, y + 1, z - 1))
-    neighbors.append((x, y + 1, z - 1))
-    neighbors.append((x + 1, y + 1, z - 1))
-
-    # same plane
-    # row above
-    neighbors.append((x - 1, y - 1, z))
-    neighbors.append((x, y - 1, z))
-    neighbors.append((x + 1, y - 1, z))
-    # same row
-    neighbors.append((x - 1, y, z))
-    neighbors.append((x + 1, y, z))
-    # row below
-    neighbors.append((x - 1, y + 1, z))
-    neighbors.append((x, y + 1, z))
-    neighbors.append((x + 1, y + 1,))
-
-    # plane below
-    # row above
-    neighbors.append((x - 1, y - 1, z + 1))
-    neighbors.append((x, y - 1, z + 1))
-    neighbors.append((x + 1, y - 1, z + 1))
-    # same row
-    neighbors.append((x - 1, y, z + 1))
-    neighbors.append((x, y, z + 1))
-    neighbors.append((x + 1, y, z + 1))
-    # row below
-    neighbors.append((x - 1, y + 1, z + 1))
-    neighbors.append((x, y + 1, z + 1))
-    neighbors.append((x + 1, y + 1, z + 1))
-    # print(f"Neighbors: {len(set(neighbors))}")
-
-    # for neighbor in sorted(neighbors):
-    #     print(neighbor)
-    active = []
-    for n in neighbors:
-        if n in cubes and cubes[n] == "#":
-            active.append(n)
-    return len(active)
-
-
-def expand_cubes(cubes):
-    """Print cubes."""
-    xmin = None
-    xmax = None
-    ymin = None
-    ymax = None
-    zmin = None
-    zmax = None
-    for cube in cubes:
-        x, y, z = cube
-
-        if xmin is None:
-            xmin = x
-        else:
-            if x < xmin:
-                xmin = x
-
-        if xmax is None:
-            xmax = x
-        else:
-            if x > xmax:
-                xmax = x
-
-        if ymin is None:
-            ymin = y
-        else:
-            if y < ymin:
-                ymin = y
-
-        if ymax is None:
-            ymax = y
-        else:
-            if y > ymax:
-                ymax = y
-
-        if zmin is None:
-            zmin = z
-        else:
-            if z < zmin:
-                zmin = z
-
-        if zmax is None:
-            zmax = z
-        else:
-            if z > zmax:
-                zmax = z
-
-    for z in range(zmin - 1, zmax + 2):
-        print(f"\nz={z}")
-        for y in range(ymin - 1, ymax + 2):
-            for x in range(xmin - 1, xmax + 2):
-                c = (x, y, z)
-                if c not in cubes:
-                    cubes[c] = "."
-    return cubes
-
-
-def run_conway_cubes(cubes):
-    """Run a single cycle of the conway cube rules."""
-    newcubes = {}
-    cubes = expand_cubes(cubes)
-    for c in cubes:
-        v = cubes[c]
-
-        if v == "#":
-            if get_active_neighbors(c, cubes) in [2, 3]:
-                newcubes[c] = "#"
-            else:
-                newcubes[c] = "."
-
-        elif v == ".":
-            if get_active_neighbors(c, cubes) == 3:
-                newcubes[c] = "#"
-            else:
-                newcubes[c] = "."
-    return newcubes
-
-
 def day17a():
     """Day 17a."""
     items = helpers.get_input_strings("day17")
+    cubes = helpers.get_3d_cubes(items)
+    helpers.print_3d_grid(cubes)
 
-    cubes = {}
+    n = 0
+    while n < 6:
+        cubes = helpers.run_3d_conway_cubes(cubes)
+        # print_grid(cubes)
+        n += 1
 
-    y = 0
-    z = 0
-    while y < len(items):
-        row = list(items[y])
-        x = 0
-        while x < len(row):
-            cubes[(x, y, z)] = row[x]
-            x += 1
-        y += 1
+    count = 0
+    for i in cubes:
+        if cubes[i] == "#":
+            count += 1
 
-    for c in cubes:
-        print(c, cubes[c])
-
-    print_grid(cubes)
-
-    cubes = run_conway_cubes(cubes)
-    print_grid(cubes)
-
-    cubes = run_conway_cubes(cubes)
-    print_grid(cubes)
+    print(f"Count: {count}")
 
 
 def day17b():
@@ -1219,37 +836,22 @@ def day17b():
     items = helpers.get_input_strings("day17test")
 
 
-def evaluate_expression(expression):
-    """Evaluate a single expression and return the result."""
-    while len(expression.split(" ")) > 3:
-        print(expression)
-        if "(" in expression:
-            popen = expression.rfind("(")
-            pclose = popen + expression[popen:].find(")")
-            sub = expression[popen + 1:pclose]
-            value = evaluate_expression(sub)
-            expression = expression[:popen] + str(value) + expression[pclose + 1:]
-        else:
-            items = expression.split(" ")
-            exp = " ".join(items[:3])
-            rest = items[3:]
-            items = [str(eval(exp))] + rest
-            expression = " ".join(items)
-    return eval(expression)
-
-
 def day18a():
     """Day 18a."""
     items = helpers.get_input_strings("day18")
     total = 0
     for expression in items:
-        total += evaluate_expression(expression)
+        total += helpers.evaluate_expression(expression)
     print(f"Total: {total}")
 
 
 def day18b():
     """Day 18a."""
-    items = helpers.get_input_strings("day18test")
+    items = helpers.get_input_strings("day18")
+    total = 0
+    for expression in items:
+        total += helpers.evaluate_expression_advanced(expression)
+    print(f"Total: {total}")
 
 
 def main():

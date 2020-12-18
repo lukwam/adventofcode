@@ -47,6 +47,13 @@ def get_multiline_input(name):
     return entries
 
 
+def print_rows(rows):
+    """Print rows."""
+    for row in rows:
+        print(row)
+    print("")
+
+
 #
 # Toboggan
 #
@@ -425,3 +432,333 @@ def perform_seating(data, length, width, limit, recurse):
         new[r] = "".join(cols)
         r += 1
     return new
+
+
+#
+# Rain Risk
+#
+def parse_action_a(loc, text):
+    """Return the action."""
+    a = text[0]
+    v = int(text[1:])
+    x, y, d = loc
+    if a == "N":
+        print(f"North {v}")
+        y += v
+    elif a == "S":
+        print(f"South {v}")
+        y -= v
+    elif a == "E":
+        print(f"East {v}")
+        x += v
+    elif a == "W":
+        print(f"West {v}")
+        x -= v
+    elif a == "L":
+        print(f"Left {v}")
+        n = 0
+        while n < v / 90:
+            if d == "E":
+                d = "N"
+            elif d == "N":
+                d = "W"
+            elif d == "W":
+                d = "S"
+            elif d == "S":
+                d = "E"
+            n += 1
+    elif a == "R":
+        print(f"Right {v}")
+        n = 0
+        while n < v / 90:
+            if d == "E":
+                d = "S"
+            elif d == "S":
+                d = "W"
+            elif d == "W":
+                d = "N"
+            elif d == "N":
+                d = "E"
+            n += 1
+    elif a == "F":
+        print(f"Forward {v}")
+        if d == "E":
+            x += v
+        elif d == "S":
+            y -= v
+        elif d == "W":
+            x -= v
+        elif d == "N":
+            y += v
+    else:
+        print(f"ERROR: Bad action: {a}")
+
+    return (x, y, d)
+
+
+def parse_action_b(loc, text):
+    """Return the action."""
+    action = text[0]
+    value = int(text[1:])
+    x, y, a, b = loc
+
+    if action == "N":
+        print(f"North {value}")
+        y += value
+
+    elif action == "S":
+        print(f"South {value}")
+        y -= value
+
+    elif action == "E":
+        print(f"East {value}")
+        x += value
+
+    elif action == "W":
+        print(f"West {value}")
+        x -= value
+
+    elif action == "L":
+        print(f"Left {value}")
+        dx = x - a
+        dy = y - b
+        n = 0
+        while n < value / 90:
+            nx = -dy
+            ny = dx
+            dx = nx
+            dy = ny
+            n += 1
+        x = a + dx
+        y = b + dy
+    elif action == "R":
+        print(f"Right {value}")
+        dx = x - a
+        dy = y - b
+        n = 0
+        while n < value / 90:
+            nx = dy
+            ny = -dx
+            dx = nx
+            dy = ny
+            n += 1
+        x = a + dx
+        y = b + dy
+
+    elif action == "F":
+        print(f"Forward {value}")
+        dx = x - a
+        dy = y - b
+        a = a + dx * value
+        b = b + dy * value
+        x = x + dx * value
+        y = y + dy * value
+
+    else:
+        print(f"ERROR: Bad action: {a}")
+
+    return (x, y, a, b)
+
+
+#
+# Rambunctious Recitation
+#
+def speak_numbers(items, final):
+    """Speak numbers in the sequence."""
+    smap = {}
+    last = None
+    n = 1
+    for i in items:
+        i = int(i)
+        smap[i] = [n]
+        last = i
+        n += 1
+    while n <= final:
+        if not n % 100000:
+            print(n)
+        if last in smap and len(smap[last]) == 1:
+            i = 0
+        else:
+            old = smap[last].pop(0)
+            i = n - old - 1
+
+        if i not in smap:
+            smap[i] = []
+        smap[i].append(n)
+        last = i
+        n += 1
+    return last
+
+
+#
+# Cube Matrix
+#
+def expand_3d_cubes(cubes):
+    """Print cubes."""
+    mmin, mmax = get_3d_min_max(cubes)
+    for z in range(mmin[2] - 1, mmax[2] + 2):
+        print(f"\nz={z}")
+        for y in range(mmin[1] - 1, mmax[1] + 2):
+            for x in range(mmin[0] - 1, mmax[0] + 2):
+                c = (x, y, z)
+                if c not in cubes:
+                    cubes[c] = "."
+    return cubes
+
+
+def get_3d_active_neighbors(c, cubes):
+    """Return the number of active neighbors for a cube."""
+    neighbors = []
+    x, y, z = c
+
+    # plane above
+    # row above
+    neighbors.append((x - 1, y - 1, z - 1))
+    neighbors.append((x, y - 1, z - 1))
+    neighbors.append((x + 1, y - 1, z - 1))
+    # same row
+    neighbors.append((x - 1, y, z - 1))
+    neighbors.append((x, y, z - 1))
+    neighbors.append((x + 1, y, z - 1))
+    # row below
+    neighbors.append((x - 1, y + 1, z - 1))
+    neighbors.append((x, y + 1, z - 1))
+    neighbors.append((x + 1, y + 1, z - 1))
+
+    # same plane
+    # row above
+    neighbors.append((x - 1, y - 1, z))
+    neighbors.append((x, y - 1, z))
+    neighbors.append((x + 1, y - 1, z))
+    # same row
+    neighbors.append((x - 1, y, z))
+    neighbors.append((x + 1, y, z))
+    # row below
+    neighbors.append((x - 1, y + 1, z))
+    neighbors.append((x, y + 1, z))
+    neighbors.append((x + 1, y + 1, z))
+
+    # plane below
+    # row above
+    neighbors.append((x - 1, y - 1, z + 1))
+    neighbors.append((x, y - 1, z + 1))
+    neighbors.append((x + 1, y - 1, z + 1))
+    # same row
+    neighbors.append((x - 1, y, z + 1))
+    neighbors.append((x, y, z + 1))
+    neighbors.append((x + 1, y, z + 1))
+    # row below
+    neighbors.append((x - 1, y + 1, z + 1))
+    neighbors.append((x, y + 1, z + 1))
+    neighbors.append((x + 1, y + 1, z + 1))
+
+    active = []
+    for n in neighbors:
+        if n in cubes and cubes[n] == "#":
+            active.append(n)
+    return len(active)
+
+
+def get_3d_cubes(items):
+    """Return a matrix of cubes."""
+    cubes = {}
+    z = 0
+    y = 0
+    while y < len(items):
+        row = list(items[y])
+        x = 0
+        while x < len(row):
+            cubes[(x, y, z)] = row[x]
+            x += 1
+        y += 1
+    return cubes
+
+
+def get_3d_min_max(cubes):
+    """Return the min and max values for x, y, and z."""
+    first = sorted(cubes)[0]
+    xmin, ymin, zmin = first
+    xmax, ymax, zmax = first
+    for cube in sorted(cubes)[1:]:
+        x, y, z = cube
+        xmin = min([xmin, x])
+        xmax = max([xmax, x])
+        ymin = min([ymin, y])
+        ymax = max([ymax, y])
+        zmin = min([zmin, z])
+        zmax = max([zmax, z])
+    return (xmin, ymin, zmin), (xmax, ymax, zmax)
+
+
+def print_3d_grid(cubes):
+    """Print cubes."""
+    mmin, mmax = get_3d_min_max(cubes)
+    for z in range(mmin[2], mmax[2] + 1):
+        print(f"\nz={z}")
+        for y in range(mmin[1], mmax[1] + 1):
+            row = []
+            for x in range(mmin[0], mmax[0] + 1):
+                c = (x, y, z)
+                if c in cubes:
+                    row.append(cubes[c])
+            print("".join(row))
+
+
+def run_3d_conway_cubes(cubes):
+    """Run a single cycle of the conway cube rules."""
+    newcubes = {}
+    cubes = expand_3d_cubes(cubes)
+    for c in cubes:
+        v = cubes[c]
+
+        if v == "#":
+            if get_3d_active_neighbors(c, cubes) in [2, 3]:
+                newcubes[c] = "#"
+            else:
+                newcubes[c] = "."
+
+        elif v == ".":
+            if get_3d_active_neighbors(c, cubes) == 3:
+                newcubes[c] = "#"
+            else:
+                newcubes[c] = "."
+    return newcubes
+
+
+def evaluate_expression(expression):
+    """Evaluate a single expression and return the result."""
+    while len(expression.split(" ")) > 3:
+        print(expression)
+        if "(" in expression:
+            popen = expression.rfind("(")
+            pclose = popen + expression[popen:].find(")")
+            sub = expression[popen + 1:pclose]
+            value = evaluate_expression(sub)
+            expression = expression[:popen] + str(value) + expression[pclose + 1:]
+        else:
+            items = expression.split(" ")
+            exp = " ".join(items[:3])
+            rest = items[3:]
+            items = [str(eval(exp))] + rest
+            expression = " ".join(items)
+    return eval(expression)
+
+
+def evaluate_expression_advanced(expression):
+    """Evaluate a single expression and return the result."""
+    while len(expression.split(" ")) > 3:
+        print(expression)
+        if "(" in expression:
+            popen = expression.rfind("(")
+            pclose = popen + expression[popen:].find(")")
+            sub = expression[popen + 1:pclose]
+            value = evaluate_expression_advanced(sub)
+            expression = expression[:popen] + str(value) + expression[pclose + 1:]
+        elif "+" in expression:
+            items = expression.split(" ")
+            plus = items.index("+")
+            value = evaluate_expression_advanced(" ".join(items[plus - 1:plus + 2]))
+            expression = " ".join(items[:plus - 1] + [str(value)] + items[plus + 2:])
+        else:
+            return eval(expression)
+    return eval(expression)
