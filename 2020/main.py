@@ -854,6 +854,439 @@ def day18b():
     print(f"Total: {total}")
 
 
+def day19a():
+    """Day 19a: Monster Messages."""
+    items = helpers.get_multiline_input("day19test")
+    rules = {}
+    for r in items[0]:
+        i = int(r.split(":")[0])
+        rules[i] = r.split(":")[1].strip().replace('"', '')
+    print(json.dumps(rules, indent=2, sort_keys=True))
+    messages = items[1]
+
+    string = helpers.build_rule_regexp(rules)
+    regexp = f"^{string}$"
+
+    matches = 0
+    for m in messages:
+        if re.match(regexp, m):
+            print(f"{m} matches!")
+            matches += 1
+        else:
+            print(f"{m} does not match.")
+    print(f"Matches: {matches}")
+
+
+def day19b():
+    """Day 19b."""
+    items = helpers.get_multiline_input("day19")
+    rules = {}
+    for r in items[0]:
+        i = int(r.split(":")[0])
+        rules[i] = r.split(":")[1].strip().replace('"', '')
+    rules[8] = "42 | 42 8"
+    rules[11] = "42 31 | 42 11 31"
+    print(json.dumps(rules, indent=2, sort_keys=True))
+    messages = items[1]
+
+    r31 = helpers.build_rule_regexp(rules, 31)
+    r42 = helpers.build_rule_regexp(rules, 42)
+
+    # string = f"{r42}+{r31}+"
+    # print(string)
+    regexp = f"^{r42}+{r31}+$"
+
+    matches = 0
+    for m in messages:
+        if re.match(regexp, m):
+            print(f"{m} matches!")
+            matches += 1
+        else:
+            print(f"{m} does not match.")
+    print(f"Matches: {matches}")
+
+
+def get_edges(tile):
+    """Get tile edges."""
+    edges = []
+    edges.append(tile[0])
+    edges.append(tile[-1])
+    left = []
+    right = []
+    for line in tile:
+        left.append(line[0])
+        right.append(line[-1])
+    edges.append("".join(left))
+    edges.append("".join(right))
+    print("")
+    return edges
+
+
+def day20a():
+    """Day 20a: Jurassic Jigsaw."""
+    items = helpers.get_multiline_input("day20")
+
+    edges = {}
+    tiles = {}
+    for i in items:
+        t = helpers.Tile(i)
+        tiles[t.id] = t
+        for e in t.edges:
+            if e not in edges:
+                edges[e] = [t.id]
+            else:
+                edges[e].append(t.id)
+
+    for e in edges:
+        if len(edges[e]) == 2:
+            j, k = edges[e]
+            if k not in tiles[j].neighbors:
+                tiles[j].neighbors.append(k)
+            if j not in tiles[k].neighbors:
+                tiles[k].neighbors.append(j)
+
+    corners = []
+    for tid in tiles:
+        t = tiles[tid]
+        if len(t.neighbors) == 2:
+            if tid not in corners:
+                corners.append(tid)
+
+    print(f"\n{' * '.join([str(i) for i in corners])} = {math.prod(corners)}")
+
+
+def day20b():
+    """Day 20b: Jurassic Jigsaw."""
+    items = helpers.get_multiline_input("day20")
+    size = int(math.sqrt(len(items)))
+    print(f"Grid Size: {size}x{size}")
+
+    edges = {}
+    tiles = {}
+    for i in items:
+        t = helpers.Tile(i)
+        tiles[t.id] = t
+        for e in t.edges:
+            if e not in edges:
+                edges[e] = [t.id]
+            else:
+                edges[e].append(t.id)
+
+    for e in edges:
+        if len(edges[e]) == 2:
+            j, k = edges[e]
+            if k not in tiles[j].neighbors:
+                tiles[j].neighbors.append(k)
+            if j not in tiles[k].neighbors:
+                tiles[k].neighbors.append(j)
+
+    corners = []
+    for tid in tiles:
+        t = tiles[tid]
+        if len(t.neighbors) == 2:
+            if tid not in corners:
+                corners.append(tid)
+
+    # print(f"\n{' * '.join([str(i) for i in corners])} = {math.prod(corners)}")
+
+    # choose a tile to be the top-left tile in the grid
+    topleft = corners[0]
+    tiles[topleft].location = (0, 0)
+
+    # locate the neighbors to the right and bottom
+    right = tiles[topleft].neighbors[0]
+    tiles[right].location = (0, 1)
+    bottom = tiles[topleft].neighbors[1]
+    tiles[bottom].location = (1, 0)
+
+    print(f"\nTop-Left: {topleft}")
+    print(f"Right: {right}")
+    print(f"Bottom: {bottom}\n")
+
+    # orient the top-left tile
+    tiles[topleft].orient_topleft(tiles[right], tiles[bottom])
+
+    grid = {}
+    for y in range(0, size):
+        for x in range(0, size):
+            v = (y, x)
+            if v == (0, 0):
+                grid[v] = tiles[topleft]
+            else:
+                if v[1] > 0:
+                    l1 = grid[(v[0], v[1] - 1)]
+                    left = l1.right
+                    e = edges[left]
+                    print(v)
+                    print(e)
+                    e.remove(l1.id)
+                    tid = e[0]
+                    t = tiles[tid]
+                    grid[v] = t
+                    t.orient_left(left)
+                else:
+                    t1 = grid[(v[0] - 1, v[1])]
+                    top = t1.bottom
+                    e = edges[top]
+                    e.remove(t1.id)
+                    print(top)
+                    tid = e[0]
+                    t = tiles[tid]
+                    grid[v] = t
+                    t.orient_top(top)
+            print(v)
+            grid[v].display_tile()
+            print()
+
+    # remove edges
+    for v in grid:
+        grid[v].remove_edges()
+
+    # assemble new tile out of full grid
+    newrows = ["Tile 0:"]
+    for y in range(0, size):
+        for i in range(0, 8):
+            row = ""
+            for x in range(0, size):
+                v = (y, x)
+                t = grid[v]
+                row += t.rows[i]
+            newrows.append(row)
+    g = helpers.Tile(newrows)
+
+    count = g.find_sea_monsters()
+    while not count:
+        g.rotate_right()
+        count = g.find_sea_monsters()
+        if not count:
+            g.flip_horizontally()
+            count = g.find_sea_monsters()
+            if not count:
+                g.flip_horizontally()
+            else:
+                break
+
+    print()
+    g.display_tile()
+
+    print(f"\nCount: {count} sea monsters")
+
+    rapids = 0
+    for row in g.rows:
+        rapids += row.count("#")
+    print(f"Roughness: {rapids}")
+
+
+def day21a():
+    """Day 21a."""
+    items = helpers.get_input_strings("day21")
+
+    allergens = {}
+    ingredients = {}
+
+    for i in items:
+        f, a = i.strip(")").split(" (contains ")
+        foods = []
+        algns = []
+        for food in f.strip().split(" "):
+            foods.append(food)
+        for algn in a.split(","):
+            algns.append(algn.strip())
+        print(foods)
+        print(algns)
+        print("")
+        for allergen in algns:
+            if allergen not in allergens:
+                allergens[allergen] = foods
+            else:
+                allergens[allergen] = list(set(allergens[allergen]).intersection(set(foods)))
+        for food in foods:
+            if food not in ingredients:
+                ingredients[food] = 0
+            ingredients[food] += 1
+
+    print(json.dumps(allergens, indent=2, sort_keys=True))
+
+    found = {}
+    while len(found) < len(allergens):
+
+        for allergen in allergens:
+            i = allergens[allergen]
+            if len(i) == 1:
+                f = i[0]
+                found[f] = allergen
+                for a in allergens:
+                    if f in allergens[a]:
+                        allergens[a].remove(f)
+
+    print(json.dumps(found, indent=2, sort_keys=True))
+
+    total = 0
+    for food in ingredients:
+        if food not in found:
+            total += ingredients[food]
+
+    print(f"Total: {total}")
+
+    print(",".join(sorted(found, key=lambda x: found[x])))
+
+
+def day22a():
+    """Day 22a: Crab Combat."""
+    items = helpers.get_multiline_input("day22")
+    player1 = items[0][1:]
+    player2 = items[1][1:]
+
+    round = 0
+    while len(player1) and len(player2):
+        round += 1
+        print(f"\n-- Round {round} --")
+        print(f"Player 1's deck: {', '.join(player1)}")
+        print(f"Player 2's deck: {', '.join(player2)}")
+        p1p = player1.pop(0)
+        p2p = player2.pop(0)
+        print(f"Player 1 plays: {p1p}")
+        print(f"Player 2 plays: {p2p}")
+        if int(p1p) > int(p2p):
+            print("Player 1 wins the round!")
+            player1.append(p1p)
+            player1.append(p2p)
+        else:
+            print("Player 2 wins the round!")
+            player2.append(p2p)
+            player2.append(p1p)
+
+    print("\n== Post-game results ==")
+    print(f"Player 1's deck: {', '.join(player1)}")
+    print(f"Player 2's deck: {', '.join(player2)}")
+
+    if player1:
+        player = player1
+    else:
+        player = player2
+
+    score = 0
+    n = 1
+    while player:
+        bottom = player.pop()
+        value = int(bottom) * n
+        score += value
+        n += 1
+
+    print(f"Score: {score}")
+
+
+def day22b():
+    """Day 22b: Crab Combat."""
+    items = helpers.get_multiline_input("day22")
+    player1 = items[0][1:]
+    player2 = items[1][1:]
+
+    global game
+    game = 0
+
+    verbose = False
+
+    def play_recursive_combat(player1, player2):
+        """Play a game of recursive combat."""
+        global game
+        game += 1
+        this = int(game)
+
+        print(f"\n=== Game {this} ===")
+        player1_hashes = []
+        player2_hashes = []
+
+        round = 0
+        while len(player1) and len(player2):
+            round += 1
+            if verbose:
+                print(f"\n-- Round {round} (Game {this}) --")
+                print(f"Player 1's deck: {', '.join(player1)}")
+                print(f"Player 2's deck: {', '.join(player2)}")
+
+            player1_hash = ','.join(player1)
+
+            if player1_hash in player1_hashes:
+                if verbose:
+                    print(f"Player 1 wins round {round} of game {this}!!")
+                    print(f"The winner of game {this} is player 1!")
+                return 1
+            else:
+                player1_hashes.append(player1_hash)
+
+            player2_hash = ','.join(player2)
+            if player2_hash in player2_hashes:
+                if verbose:
+                    print(f"Player 1 wins round {round} of game {this}!!")
+                    print(f"The winner of game {this} is player 1!")
+                return 1
+            else:
+                player2_hashes.append(player2_hash)
+
+            # play a round
+            p1p = player1.pop(0)
+            p2p = player2.pop(0)
+
+            if verbose:
+                print(f"Player 1 plays: {p1p}")
+                print(f"Player 2 plays: {p2p}")
+
+            winner = 0
+            if len(player1) >= int(p1p) and len(player2) >= int(p2p):
+                print("Playing a sub-game to determine the winner...")
+                winner = play_recursive_combat(player1[:int(p1p)], player2[:int(p2p)])
+                print(f"\n... anyway back to game {this}.")
+            elif int(p1p) > int(p2p):
+                winner = 1
+            elif int(p2p) > int(p1p):
+                winner = 2
+
+            if winner == 1:
+                if verbose:
+                    print(f"Player 1 wins round {round} of game {this}!")
+                player1.append(p1p)
+                player1.append(p2p)
+            elif winner == 2:
+                if verbose:
+                    print(f"Player 2 wins round {round} of game {this}!")
+                player2.append(p2p)
+                player2.append(p1p)
+
+        if player1:
+            print(f"The winner of game {this} is player 1!")
+            return 1
+        else:
+            print(f"The winner of game {this} is player 2!")
+            return 2
+
+    winner = play_recursive_combat(player1, player2)
+    print("\n== Post-game results ==")
+    print(f"Player 1's deck: {', '.join(player1)}")
+    print(f"Player 2's deck: {', '.join(player2)}")
+    if winner == 1:
+        print("\nPlayer 1 Wins!!!")
+    elif winner == 2:
+        print("\nPlayer 2 Wins!!!")
+    else:
+        print("WTF!")
+
+    if player1:
+        player = player1
+    else:
+        player = player2
+
+    score = 0
+    n = 1
+    while player:
+        bottom = player.pop()
+        value = int(bottom) * n
+        score += value
+        n += 1
+
+    print(f"Score: {score}")
+
+
 def main():
     """Main function."""
     if len(sys.argv):

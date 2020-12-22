@@ -762,3 +762,167 @@ def evaluate_expression_advanced(expression):
         else:
             return eval(expression)
     return eval(expression)
+
+
+def build_rule_regexp(rules, key=0):
+    """Build a regexp to represent the rules."""
+    rule = rules[key]
+    # print(rule)
+    if rule in ["a", "b"]:
+        return rule
+    opts = rule.split(" | ")
+    ors = []
+    for o in opts:
+        # print(o)
+        nums = o.split(" ")
+        items = []
+        for n in nums:
+            v = build_rule_regexp(rules, key=int(n))
+            items.append(v)
+        ors.append("".join(items))
+    return f"({'|'.join(ors)})"
+
+
+#
+# Jigsaw Tiles
+#
+class Tile:
+    """Tile class."""
+
+    def __init__(self, raw_tile):
+        """Initialize a tile class instance."""
+        self.raw_tile = raw_tile
+        self.header = raw_tile[0]
+        self.rows = raw_tile[1:]
+
+        self.id = int(re.search(r"[0-9]+", self.header).group())
+        print(f"\nTile {self.id}:")
+        self.display_tile()
+
+        self.edges = []
+        self.get_edges()
+        self.location = ()
+        self.neighbors = []
+
+    def display_tile(self):
+        """Display this tile."""
+        for row in self.rows:
+            print(row)
+
+    def find_sea_monsters(self):
+        """Return the number of sea monsters on this tile."""
+        count = 0
+        n = 1
+        first = r"(..................)#(.)(.*)$"
+        mid = r"#(....)##(....)##(....)###(.*)$"
+        last = r"(.)#(..)#(..)#(..)#(..)#(..)#(...)(.*)$"
+        while n < len(self.rows):
+            row = self.rows[n]
+
+            # find middle row of sea monster
+            # result = re.search(mid, row)
+            for result in re.finditer(mid, row):
+                if result:
+                    print(result)
+                    if n < len(self.rows) - 1:
+                        next = self.rows[n + 1]
+                        n1 = result.span()[0]
+                        if re.match(last, next[n1:]):
+                            prev = self.rows[n - 1]
+                            if re.match(first, prev[n1:]):
+                                row1 = prev[:n1]
+                                row1 += re.sub(first, r"\1O\2\3", prev[n1:])
+                                row2 = row[:n1]
+                                row2 += re.sub(mid, r"O\1OO\2OO\3OOO\4", row[n1:])
+                                row3 = next[:n1]
+                                row3 += re.sub(last, r"\1O\2O\3O\4O\5O\6O\7\8", next[n1:])
+                                self.rows[n - 1] = row1
+                                self.rows[n] = row2
+                                self.rows[n + 1] = row3
+                                count += 1
+            n += 1
+        return count
+
+    def flip_horizontally(self):
+        """Flip a tile side to side."""
+        rows = []
+        for row in self.rows:
+            rows.append(row[::-1])
+        self.rows = rows
+        self.get_edges()
+
+    def flip_vertically(self):
+        """Flip a tile top to bottom."""
+        self.rows = self.rows[::-1]
+        self.get_edges()
+
+    def get_edges(self):
+        """Get the tile's edges."""
+        self.top = self.rows[0]
+        self.bottom = self.rows[-1]
+        self.left = ""
+        self.right = ""
+        for row in self.rows:
+            self.left += row[0]
+            self.right += row[-1]
+        edges = [
+            self.top,
+            self.right,
+            self.bottom,
+            self.left,
+        ]
+        reversed_edges = [
+            self.top[::-1],
+            self.right[::-1],
+            self.bottom[::-1],
+            self.left[::-1],
+        ]
+        all_edges = edges + reversed_edges
+        self.edges = all_edges
+        return all_edges
+
+    def orient_topleft(self, right, bottom):
+        """Orient the tile."""
+        r = self.shared_edges(right)[0]
+        b = self.shared_edges(bottom)[0]
+        while self.edges.index(r) % 4 != 1:
+            self.rotate_right()
+        if self.edges.index(b) % 4 != 2:
+            self.flip_vertically()
+
+    def orient_left(self, left):
+        """Orient this tile based on the tile to it's left."""
+        while self.edges.index(left) % 4 != 3:
+            self.rotate_right()
+        if self.left != left:
+            self.flip_vertically()
+
+    def orient_top(self, top):
+        """Orient this tile based on the tile above."""
+        while self.edges.index(top) % 4 != 0:
+            self.rotate_right()
+        if self.top != top:
+            self.flip_horizontally()
+
+    def remove_edges(self):
+        """Remove the edges around the tiles."""
+        rows = []
+        for row in self.rows[1:-1]:
+            rows.append(row[1:-1])
+        self.rows = rows
+        return self
+
+    def rotate_right(self):
+        """Rotate a tile 90 degrees clockwise."""
+        rows = []
+        for x in range(0, len(self.rows)):
+            row = ""
+            for y in self.rows[::-1]:
+                row += y[x]
+            rows.append(row)
+        self.rows = rows
+        self.get_edges()
+
+    def shared_edges(self, tile):
+        """Return the shared edges between two tiles."""
+        return list(set(self.edges).intersection(set(tile.edges)))
