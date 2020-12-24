@@ -1287,6 +1287,332 @@ def day22b():
     print(f"Score: {score}")
 
 
+def gen_cups_display(cups, current, position):
+    """Return a string to display of cups."""
+    index = cups.index(current)
+    if index != position:
+        cups = rotate_string(cups, position - index)
+    string = ""
+    for i in cups:
+        if i == current:
+            string += f"({i}) "
+        else:
+            string += f"{i} "
+    return string.strip()
+
+
+def get_destination(current, cups):
+    """Return the new destination."""
+    destination = str(int(current) - 1)
+    while destination not in cups:
+        if destination == "0":
+            return max(cups)
+        destination = str(int(destination) - 1)
+    return destination
+
+
+def rotate_string(string, n):
+    """Rotate a string."""
+    a = string[0:-n]
+    b = string[-n:]
+    return b + a
+
+
+def day23():
+    """Day 23a."""
+    items = helpers.get_input_strings("day23test")
+    cups = [int(x) for x in items[0]]
+    print(f"Cups: {cups}")
+
+    current = None
+    cups_len = len(cups)
+
+    for move in range(100):
+        position = move % 9
+        print(f"\n-- move {move + 1} --")
+
+        # 1. Find current cup
+        current_ix = (cups.index(current) + 1) % cups_len if current else 0
+        current = cups[current_ix]
+
+        print(f"cups: {gen_cups_display(cups, current, position)}")
+
+        # 2. Pick up cups
+        picked_up = []
+        for j in range(3):
+            picked_up.append(cups[(current_ix + j + 1) % cups_len])
+        for p in picked_up:
+            cups.remove(p)
+
+        # 3. Find destination cup
+        destination = current - 1 or cups_len
+        while destination in picked_up:
+            destination = destination - 1 or cups_len
+        destination_ix = cups.index(destination)
+
+        print(f"pick up: {', '.join(str(x) for x in picked_up)}")
+        print(f"destination: {destination}")
+
+        # 4. Rearrange the cups
+        cups = cups[: destination_ix + 1] + picked_up + cups[destination_ix + 1:]
+
+    ix_1 = cups.index(1)
+    result = cups[ix_1 + 1:] + cups[:ix_1]
+    print(''.join(str(i) for i in result))
+
+
+def day23a():
+    """Second attempt at day23."""
+    items = helpers.get_input_strings("day23")
+    cups = items[0]
+    print(f"Cups: {cups}")
+
+    index = 0
+    move = 0
+    while move < 100:
+        move += 1
+        position = (move - 1) % 9
+
+        # get the current cup based on the index
+        current = cups[index]
+
+        # if we're near the end of the string, rotate it a bit
+        if index > 5:
+            cups = rotate_string(cups, 4)
+            index = cups.index(current)
+
+        pickup = cups[index + 1:index + 4]
+        newcups = cups[0:index + 1] + cups[index + 4:]
+
+        destination = get_destination(current, newcups)
+
+        print(f"\n-- move {move} --")
+        print(f"cups: {gen_cups_display(cups, current, position)}")
+        print(f"pick up: {', '.join(pickup)}")
+        print(f"destination: {destination}")
+
+        dindex = newcups.index(destination)
+        a = newcups[0:dindex + 1]
+        b = newcups[dindex + 1:]
+        cups = a + pickup + b
+        index = cups.index(current) + 1
+        if index == 9:
+            index = 0
+
+    current = cups[index]
+
+    print("\n-- final --")
+    print(f"cups: {gen_cups_display(cups, current, position + 1 % 9)}")
+
+    n = cups.index("1")
+    if n:
+        labels = rotate_string(cups, 9 - n)
+
+    print(f"\nAnswer: {labels[1:]}")
+
+def day23b():
+    """Day 23b."""
+    items = helpers.get_input_strings("day23test")
+
+
+#
+# ......................0123456789
+# 5        / \ / \ / \ / \ / \ / \ / \ / \
+# 4       |   |   |   |   |   |   |   |   |
+# 3        \ / \ / \ / \ / \ / \ / \ / \ /
+# 2         |   |   | F | A |   |   |   |
+# 1        / \ / \ / \ / \ / \ / \ / \ / \
+# 0       |   |   | E | X | B |   |   |   |
+# -1       \ / \ / \ / \ / \ / \ / \ / \ /
+# -2        |   |   | D | C |   |   |   |
+# -3       / \ / \ / \ / \ / \ / \ / \ / \
+# -4      |   |   |   |   |   |   |   |   |
+# -5       \ / \ / \ / \ / \ / \ / \ / \ /
+#
+# X = (0, 0)
+# A = (2, 2) = ne
+# B = (4, 0) = e
+# C = (2, -2) = se
+# D = (-2, -2) = sw
+# E = (-4, 0) = w
+# F = (-2, 2) = nw
+#
+
+class Floortile:
+    """Floor tile class."""
+
+    def __init__(self, v, tiles):
+        """Initialize a floortile."""
+        self.v = v
+        self.tiles = tiles
+        self.state = 0
+        if v in tiles:
+            self.state = tiles[v].state
+        tiles[v] = self
+
+    def flip(self):
+        """Flip this tile."""
+        if self.state == 0:
+            print(f"Flipping tile {self.v} from white to BLACK")
+            self.state = 1
+        else:
+            print(f"Flipping tile {self.v} from black to WHITE")
+            self.state = 0
+
+    def check_neighbors(self):
+        """Return the number of black neighbor tiles."""
+        count = 0
+        for v in self.get_neighbors():
+            n = Floortile(v, self.tiles)
+            if n.state:
+                count += 1
+        return count
+
+    def get_neighbors(self):
+        """Assemble a list of all 6 neighbors of this tile."""
+        neighbors = []
+        x, y = self.v
+        neighbors.append((x + 2, y + 2))
+        neighbors.append((x + 4, y))
+        neighbors.append((x + 2, y - 2))
+        neighbors.append((x - 2, y - 2))
+        neighbors.append((x - 4, y))
+        neighbors.append((x - 2, y + 2))
+        return neighbors
+
+
+def day24a():
+    """Day 24a: Lobby Layout."""
+    items = helpers.get_input_strings("day24")
+    tiles = {}
+
+    for i in items:
+        # get steps
+        steps = []
+        while i:
+            f = i[0]
+            if f in ["e", "w"]:
+                steps.append(f)
+                i = i[1:]
+            else:
+                f = i[0:2]
+                steps.append(f)
+                i = i[2:]
+        print(steps)
+
+        # run through steps
+        t = Floortile((0, 0), tiles)
+        for d in steps:
+            x, y = t.v
+            if d == "ne":
+                v = (x + 2, y + 2)
+            elif d == "e":
+                v = (x + 4, y)
+            elif d == "se":
+                v = (x + 2, y - 2)
+            elif d == "sw":
+                v = (x - 2, y - 2)
+            elif d == "w":
+                v = (x - 4, y)
+            elif d == "nw":
+                v = (x - 2, y + 2)
+            # visit tile
+            t = Floortile(v, tiles)
+            # print(f"-> {d} {v}")
+        t.flip()
+    print(len(tiles))
+    black = 0
+    for v in tiles:
+        t = tiles[v]
+        if t.state:
+            black += 1
+    print(f"Total Black: {black}")
+
+
+def day24b():
+    """Day 24b: Lobby Layout."""
+    items = helpers.get_input_strings("day24test")
+    tiles = {}
+
+    for i in items:
+        # get steps
+        steps = []
+        while i:
+            f = i[0]
+            if f in ["e", "w"]:
+                steps.append(f)
+                i = i[1:]
+            else:
+                f = i[0:2]
+                steps.append(f)
+                i = i[2:]
+        # print(steps)
+
+        # run through steps
+        t = Floortile((0, 0), tiles)
+        for d in steps:
+            x, y = t.v
+            if d == "ne":
+                v = (x + 2, y + 2)
+            elif d == "e":
+                v = (x + 4, y)
+            elif d == "se":
+                v = (x + 2, y - 2)
+            elif d == "sw":
+                v = (x - 2, y - 2)
+            elif d == "w":
+                v = (x - 4, y)
+            elif d == "nw":
+                v = (x - 2, y + 2)
+            # visit tile
+            t = Floortile(v, tiles)
+            # print(f"-> {d} {v}")
+        t.flip()
+
+    print(f"\nTiles: {len(tiles)}")
+    black = 0
+    for v in tiles:
+        t = tiles[v]
+        if t.state:
+            black += 1
+    print(f"Black Tiles: {black}")
+
+    day = 0
+    while day < 3:
+        day += 1
+
+        # expand tiles
+        for v in dict(tiles):
+            t = tiles[v]
+            if t.state:
+                t.check_neighbors()
+
+        # get tiles to flip
+        flip = []
+        for v in dict(tiles):
+            t = tiles[v]
+            if t.state:
+                if t.check_neighbors() == 2:
+                    flip.append(t)
+            else:
+                c = t.check_neighbors()
+                if c == 0 or c > 2:
+                    flip.append(t)
+
+        # flip tiles
+        for t in flip:
+            t.flip()
+
+        # count black tiles
+        black = 0
+        for v in dict(tiles):
+            t = tiles[v]
+            if t.state:
+                black += 1
+        print(f"\nDay {day}: {black}")
+        print(f"\nTiles: {len(tiles)}")
+
+
 def main():
     """Main function."""
     if len(sys.argv):

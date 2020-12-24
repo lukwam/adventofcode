@@ -725,6 +725,27 @@ def run_3d_conway_cubes(cubes):
     return newcubes
 
 
+def run_4d_conway_cubes(cubes):
+    """Run a single cycle of the conway cube rules."""
+    newcubes = {}
+    cubes = expand_4d_cubes(cubes)
+    for c in cubes:
+        v = cubes[c]
+
+        if v == "#":
+            if get_3d_active_neighbors(c, cubes) in [2, 3]:
+                newcubes[c] = "#"
+            else:
+                newcubes[c] = "."
+
+        elif v == ".":
+            if get_3d_active_neighbors(c, cubes) == 3:
+                newcubes[c] = "#"
+            else:
+                newcubes[c] = "."
+    return newcubes
+
+
 def evaluate_expression(expression):
     """Evaluate a single expression and return the result."""
     while len(expression.split(" ")) > 3:
