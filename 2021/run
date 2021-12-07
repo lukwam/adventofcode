@@ -1,0 +1,9 @@
+#!/bin/bash
+
+IMAGE="python:3.9"
+
+docker run -it --rm \
+    -w /workspace \
+    -v "$(pwd)":/workspace \
+    "${IMAGE}" \
+    python main.py ${*}
