@@ -1667,9 +1667,466 @@ def day13b():
     rows = data.split("\n")
 
 
+def day14a():
+    day = "day14a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    template, part2 = data.split("\n\n")
+    rules = {}
+    for rule in part2.split("\n"):
+        a, b = rule.split(" -> ")
+        rules[a] = b
+
+    def insert_items(template, rules):
+        """Insert items into the template."""
+        pairs = []
+        n = 0
+        while n < len(template) - 1:
+            pair = template[n:n+2]
+            pairs.append(pair)
+            n += 1
+
+        output = ""
+        for pair in pairs:
+            if pair in rules:
+                a, b = list(pair)
+                new = rules[pair]
+                # print(pair, new)
+                output += f"{a}{new}"
+            else:
+                output += a
+        output += b
+        return output
+
+    n = 0
+    while n < 40:
+        print(f"{n}")
+        template = insert_items(template, rules)
+        n += 1
+
+    stats = {}
+    for char in template:
+        if char not in stats:
+            stats[char] = 0
+        stats[char] += 1
+
+    data = sorted(stats, key=lambda x: stats[x])
+    top = data[-1]
+    bottom = data[0]
+    answer = stats[top] - stats[bottom]
+    print(answer)
+
+def day14b():
+    day = "day14b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    template, part2 = data.split("\n\n")
+
+    def get_pairs(string):
+        """Return pairs."""
+        pairs = []
+        n = 0
+        while n < len(string) - 1:
+            pair = string[n:n+2]
+            pairs.append(pair)
+            n += 1
+        return pairs
+
+    def update_counts(counts, rules):
+        data = dict(counts)
+        for pair in data:
+            num = data[pair]
+            if not num:
+                continue
+            a, c = list(pair)
+            b = rules[pair]
+            pair1 = a + b
+            pair2 = b + c
+            counts[pair] -= num
+            counts[pair1] += num
+            counts[pair2] += num
+        return counts
+
+    counts = {}
+    rules = {}
+    for rule in part2.split("\n"):
+        a, b = rule.split(" -> ")
+        rules[a] = b
+        counts[a] = 0
+
+    # set initial counts
+    for pair in get_pairs(template):
+        counts[pair] += 1
+
+    # print(json.dumps(counts, indent=2, sort_keys=True))
+
+    last = template[-1]
+
+    n = 0
+    while n < 40:
+        counts = update_counts(counts, rules)
+        n += 1
+
+    for count in sorted(counts):
+        print(count, counts[count])
+
+    letters = {last: 1}
+    for pair in sorted(counts):
+        count = counts[pair]
+        a, b = list(pair)
+        if a not in letters:
+            letters[a] = 0
+        letters[a] += count
+
+    print(json.dumps(letters, indent=2, sort_keys=True))
+    totals = sorted(letters, key=lambda x: letters[x])
+    top = totals[-1]
+    bottom = totals[0]
+    print(top, bottom)
+    answer = letters[top] - letters[bottom]
+    print(answer)
+
+
+def day15a():
+    day = "day15a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    rows = data.split("\n")
+
+    matrix = []
+    for row in rows:
+        newrow = []
+        for item in list(row):
+            newrow.append(int(item))
+        matrix.append(newrow)
+
+    numrows = len(matrix)
+    numcols = len(matrix[0])
+
+    loc = (0, 0)
+    dest = (numrows - 1, numcols - 1)
+
+    def get_next_steps(loc):
+        """Return the list of next steps for a given location."""
+        next_steps = []
+        x, y = loc
+        right = (x, y+1)
+        down = (x+1, y)
+        left = (x, y-1)
+        up = (x-1, y)
+        for n in [
+            right,
+            down,
+            left,
+            up
+        ]:
+            a, b = n
+            if a < 0:
+                continue
+            if a > numrows - 1:
+                continue
+            if b < 0:
+                continue
+            if b > numcols - 1:
+                continue
+            next_steps.append(n)
+        return next_steps
+
+    def find_path(loc):
+        """Return the best path to the destination."""
+        if loc == dest:
+            x, y = dest
+            risk = matrix[x][y]
+            return risk
+
+        next_steps = get_next_steps(loc)
+
+        scores = {}
+        for step in next_steps:
+            x, y = step
+            scores[step] = find_path(step) + matrix[x][y]
+
+        # print(f"\n{loc}:")
+        # for step in sorted(scores, key=lambda x: scores[x]):
+        #     print(f" * {step}: {scores[step]}")
+
+        lowest = sorted(scores, key=lambda x: scores[x])[0]
+        # print(f"Lowest: {lowest}")
+        x, y = lowest
+        return scores[lowest]
+
+
+    # response = find_path(loc)
+    # print(response - 1)
+
+    from collections import defaultdict
+
+    class Graph():
+        def __init__(self):
+            """
+            self.edges is a dict of all possible next nodes
+            e.g. {'X': ['A', 'B', 'C', 'E'], ...}
+            self.weights has all the weights between two nodes,
+            with the two nodes as a tuple as the key
+            e.g. {('X', 'A'): 7, ('X', 'B'): 2, ...}
+            """
+            self.edges = defaultdict(list)
+            self.weights = {}
+
+        def add_edge(self, from_node, to_node, weight):
+            # Note: assumes edges are bi-directional
+            self.edges[from_node].append(to_node)
+            # self.edges[to_node].append(from_node)
+            self.weights[(from_node, to_node)] = weight
+            # self.weights[(to_node, from_node)] = weight
+
+    graph = Graph()
+
+    def initialize_graph(graph):
+        # initialize graph
+        x = 0
+        while x < numrows:
+            y = 0
+            while y < numcols:
+                loc = (x, y)
+                for dest in get_next_steps(loc):
+                    a, b = dest
+                    value = matrix[a][b]
+                    graph.add_edge(loc, dest, value)
+                y += 1
+            x += 1
+
+    def dijsktra(graph, initial, end):
+        # shortest paths is a dict of nodes
+        # whose value is a tuple of (previous node, weight)
+        shortest_paths = {initial: (None, 0)}
+        current_node = initial
+        visited = set()
+
+        while current_node != end:
+            visited.add(current_node)
+            destinations = graph.edges[current_node]
+            weight_to_current_node = shortest_paths[current_node][1]
+
+            for next_node in destinations:
+                weight = graph.weights[(current_node, next_node)] + weight_to_current_node
+                if next_node not in shortest_paths:
+                    shortest_paths[next_node] = (current_node, weight)
+                else:
+                    current_shortest_weight = shortest_paths[next_node][1]
+                    if current_shortest_weight > weight:
+                        shortest_paths[next_node] = (current_node, weight)
+
+            next_destinations = {node: shortest_paths[node] for node in shortest_paths if node not in visited}
+            if not next_destinations:
+                return "Route Not Possible"
+            # next node is the destination with the lowest weight
+            current_node = min(next_destinations, key=lambda k: next_destinations[k][1])
+
+        # Work back through destinations in shortest path
+        path = []
+        while current_node is not None:
+            path.append(current_node)
+            next_node = shortest_paths[current_node][0]
+            current_node = next_node
+        # Reverse path
+        path = path[::-1]
+        return path
+
+    initialize_graph(graph)
+    path = dijsktra(graph, (0, 0), dest)
+    print(path)
+    score = 0
+    for loc in path[1:]:
+        a, b = loc
+        score += matrix[a][b]
+    print(f"score: {score}")
+
+
+def day15b():
+    day = "day15b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    rows = data.split("\n")
+
+    matrix = []
+    for row in rows:
+        newrow = []
+        for item in list(row):
+            newrow.append(int(item))
+        n = 1
+        while n < 5:
+            for item in list(row):
+                value = int(item) + n
+                if value > 9:
+                    value -= 9
+                newrow.append(value)
+            n += 1
+        matrix.append(newrow)
+        print("".join([str(x) for x in newrow]))
+
+    m = 1
+    original = list(matrix)
+    while m < 5:
+        for row in original:
+            newrow = []
+            for item in row:
+                value = item + m
+                if value > 9:
+                    value -= 9
+                newrow.append(value)
+            matrix.append(newrow)
+            print("".join([str(x) for x in newrow]))
+        m += 1
+
+    numrows = len(matrix)
+    numcols = len(matrix[0])
+
+    loc = (0, 0)
+    dest = (numrows - 1, numcols - 1)
+
+    def get_next_steps(loc):
+        """Return the list of next steps for a given location."""
+        next_steps = []
+        x, y = loc
+        right = (x, y+1)
+        down = (x+1, y)
+        left = (x, y-1)
+        up = (x-1, y)
+        for n in [
+            right,
+            down,
+            left,
+            up
+        ]:
+            a, b = n
+            if a < 0:
+                continue
+            if a > numrows - 1:
+                continue
+            if b < 0:
+                continue
+            if b > numcols - 1:
+                continue
+            next_steps.append(n)
+        return next_steps
+
+    def find_path(loc):
+        """Return the best path to the destination."""
+        if loc == dest:
+            x, y = dest
+            risk = matrix[x][y]
+            return risk
+
+        next_steps = get_next_steps(loc)
+
+        scores = {}
+        for step in next_steps:
+            x, y = step
+            scores[step] = find_path(step) + matrix[x][y]
+
+        # print(f"\n{loc}:")
+        # for step in sorted(scores, key=lambda x: scores[x]):
+        #     print(f" * {step}: {scores[step]}")
+
+        lowest = sorted(scores, key=lambda x: scores[x])[0]
+        # print(f"Lowest: {lowest}")
+        x, y = lowest
+        return scores[lowest]
+
+
+    # response = find_path(loc)
+    # print(response - 1)
+
+    from collections import defaultdict
+
+    class Graph():
+        def __init__(self):
+            """
+            self.edges is a dict of all possible next nodes
+            e.g. {'X': ['A', 'B', 'C', 'E'], ...}
+            self.weights has all the weights between two nodes,
+            with the two nodes as a tuple as the key
+            e.g. {('X', 'A'): 7, ('X', 'B'): 2, ...}
+            """
+            self.edges = defaultdict(list)
+            self.weights = {}
+
+        def add_edge(self, from_node, to_node, weight):
+            # Note: assumes edges are bi-directional
+            self.edges[from_node].append(to_node)
+            # self.edges[to_node].append(from_node)
+            self.weights[(from_node, to_node)] = weight
+            # self.weights[(to_node, from_node)] = weight
+
+    graph = Graph()
+
+    def initialize_graph(graph):
+        # initialize graph
+        x = 0
+        while x < numrows:
+            y = 0
+            while y < numcols:
+                loc = (x, y)
+                for dest in get_next_steps(loc):
+                    a, b = dest
+                    value = matrix[a][b]
+                    graph.add_edge(loc, dest, value)
+                y += 1
+            x += 1
+
+    def dijsktra(graph, initial, end):
+        # shortest paths is a dict of nodes
+        # whose value is a tuple of (previous node, weight)
+        shortest_paths = {initial: (None, 0)}
+        current_node = initial
+        visited = set()
+
+        while current_node != end:
+            if len(visited) % 1000 == 0:
+                print(len(visited))
+            visited.add(current_node)
+            destinations = graph.edges[current_node]
+            weight_to_current_node = shortest_paths[current_node][1]
+
+            for next_node in destinations:
+                weight = graph.weights[(current_node, next_node)] + weight_to_current_node
+                if next_node not in shortest_paths:
+                    shortest_paths[next_node] = (current_node, weight)
+                else:
+                    current_shortest_weight = shortest_paths[next_node][1]
+                    if current_shortest_weight > weight:
+                        shortest_paths[next_node] = (current_node, weight)
+
+            next_destinations = {node: shortest_paths[node] for node in shortest_paths if node not in visited}
+            if not next_destinations:
+                return "Route Not Possible"
+            # next node is the destination with the lowest weight
+            current_node = min(next_destinations, key=lambda k: next_destinations[k][1])
+
+        # Work back through destinations in shortest path
+        path = []
+        while current_node is not None:
+            path.append(current_node)
+            next_node = shortest_paths[current_node][0]
+            current_node = next_node
+        # Reverse path
+        path = path[::-1]
+        return path
+
+    initialize_graph(graph)
+    path = dijsktra(graph, (0, 0), dest)
+    print(path)
+    score = 0
+    for loc in path[1:]:
+        a, b = loc
+        score += matrix[a][b]
+    print(f"score: {score}")
+
+
 # Main Function
 def main():
-    day = "13a"
+    day = "15b"
     if len(sys.argv) > 1:
         day = sys.argv[1]
     eval(f"day{day}()")
