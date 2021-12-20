@@ -2,6 +2,7 @@
 import json
 import math
 import sys
+from copy import deepcopy
 
 datadir = "data"
 
@@ -2124,9 +2125,678 @@ def day15b():
     print(f"score: {score}")
 
 
+def day16a():
+    day = "day16a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+
+    hexmap = {
+        "0": "0000",
+        "1": "0001",
+        "2": "0010",
+        "3": "0011",
+        "4": "0100",
+        "5": "0101",
+        "6": "0110",
+        "7": "0111",
+        "8": "1000",
+        "9": "1001",
+        "A": "1010",
+        "B": "1011",
+        "C": "1100",
+        "D": "1101",
+        "E": "1110",
+        "F": "1111",
+    }
+    binmap = {}
+    for key, value in hexmap.items():
+        binmap[value] = key
+
+    def chunks(l, n):
+        """Yield successive n-sized chunks from l."""
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+
+    def hex2bin(data):
+        packet = ""
+        for char in data:
+            binary = hexmap[char]
+            packet += binary
+        return packet
+
+    def get_literal(string):
+        """Return the literal value."""
+        binary = ""
+        for chunk in chunks(list(string), 5):
+            if chunk[0] == "1":
+                binary += "".join(chunk[1:])
+            elif chunk[0] == "0":
+                binary += "".join(chunk[1:])
+                break
+        return int(binary, 2)
+
+    def parse(binary_string, bit_index, versions):
+        packet_version = binary_string[bit_index:bit_index+3]
+        type_id = int(binary_string[bit_index+3:bit_index+6], 2)
+        bit_index += 6
+
+        versions.append(int(packet_version, 2))
+
+        if (type_id == 4): # Literal Value
+            value = ''
+            while (binary_string[bit_index] == '1'):
+                value += binary_string[bit_index+1:bit_index+5]
+                bit_index += 5
+
+            value += binary_string[bit_index+1:bit_index+5]
+            bit_index += 5
+        else: # Operator
+            length_type_id = binary_string[bit_index]
+            bit_index += 1
+
+            field_length = 15 if length_type_id == '0' else 11
+
+            remaining = int(binary_string[bit_index:bit_index+field_length], 2)
+            bit_index += field_length
+
+            while (remaining > 0):
+                subpacket_length = parse(binary_string, bit_index, versions) - bit_index
+                bit_index += subpacket_length
+                remaining -= subpacket_length if field_length == 15 else 1
+
+        return bit_index
+
+
+    versions = []
+    string = hex2bin(data)
+    print(string)
+    parse(string, 0, versions)
+    print(f"\nVersion Sum: {sum(versions)}")
+
+def day16b():
+    day = "day16b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+
+    hexmap = {
+        "0": "0000",
+        "1": "0001",
+        "2": "0010",
+        "3": "0011",
+        "4": "0100",
+        "5": "0101",
+        "6": "0110",
+        "7": "0111",
+        "8": "1000",
+        "9": "1001",
+        "A": "1010",
+        "B": "1011",
+        "C": "1100",
+        "D": "1101",
+        "E": "1110",
+        "F": "1111",
+    }
+    binmap = {}
+    for key, value in hexmap.items():
+        binmap[value] = key
+
+    def chunks(l, n):
+        """Yield successive n-sized chunks from l."""
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+
+    def hex2bin(data):
+        packet = ""
+        for char in data:
+            binary = hexmap[char]
+            packet += binary
+        return packet
+
+    def get_literal(string):
+        """Return the literal value."""
+        binary = ""
+        for chunk in chunks(list(string), 5):
+            if chunk[0] == "1":
+                binary += "".join(chunk[1:])
+            elif chunk[0] == "0":
+                binary += "".join(chunk[1:])
+                break
+        return int(binary, 2)
+
+    def parse(binary_string, bit_index, versions):
+        packet_version = binary_string[bit_index:bit_index+3]
+        type_id = int(binary_string[bit_index+3:bit_index+6], 2)
+        bit_index += 6
+
+        string = binary_string[bit_index:]
+        # print(f"\nString: {string}")
+        # print(f"Version: {packet_version}, Type ID: {type_id}")
+
+        versions.append(int(packet_version, 2))
+
+        if (type_id == 4): # Literal Value
+            valuestring = ''
+            while (binary_string[bit_index] == '1'):
+                valuestring += binary_string[bit_index+1:bit_index+5]
+                bit_index += 5
+
+            valuestring += binary_string[bit_index+1:bit_index+5]
+            bit_index += 5
+
+            value = int(valuestring, 2)
+            # print(f"Value: {int(value, 2)}")
+
+        else: # Operator
+            length_type_id = binary_string[bit_index]
+            bit_index += 1
+
+            field_length = 15 if length_type_id == '0' else 11
+
+            remaining = int(binary_string[bit_index:bit_index+field_length], 2)
+            bit_index += field_length
+
+            values = []
+            while (remaining > 0):
+                subindex, value = parse(binary_string, bit_index, versions)
+                values.append(value)
+                subpacket_length = subindex - bit_index
+                bit_index += subpacket_length
+                remaining -= subpacket_length if field_length == 15 else 1
+
+            if type_id == 0:
+                print(f"Add: {values}")
+                value = sum(values)
+            elif type_id == 1:
+                print(f"Multiply: {values}")
+                value = math.prod(values)
+            elif type_id == 2:
+                print(f"Minimum: {values}")
+                value = min(values)
+            elif type_id == 3:
+                print(f"Maximum: {values}")
+                value = max(values)
+            elif type_id == 5:
+                print(f"Greater Than: {values}")
+                value = 1 if values[0] > values[1] else 0
+            elif type_id == 6:
+                print(f"Less Than: {values}")
+                value = 1 if values[0] < values[1] else 0
+            elif type_id == 7:
+                print(f"Equal To: {values}")
+                value = 1 if values[0] == values[1] else 0
+
+        return bit_index, value
+
+
+    versions = []
+    string = hex2bin(data)
+    _, value = parse(string, 0, versions)
+    # print(index)
+    print(f"Value: {value}")
+
+
+def day17a():
+    day = "day17a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    string = data.replace("target area: ", "")
+    a, b = string.split(", ")
+    x1, x2 = a.replace("x=", "").split("..")
+    y1, y2 = b.replace("y=", "").split("..")
+    x1 = int(x1)
+    x2 = int(x2)
+    y1 = int(y1)
+    y2 = int(y2)
+
+    def run_step(start, velocity):
+        x, y = start
+        a, b = velocity
+
+        x += a
+        y += b
+
+        # add drag
+        if a > 0:
+            a -= 1
+        elif a < 0:
+            a += 1
+
+        b -= 1
+
+        return (x, y), (a, b)
+
+    def check_velocity(location, velocity):
+        max_height = 0
+        while True:
+            location, velocity = run_step(location, velocity)
+            x, y = location
+            if y > max_height:
+                max_height = y
+            if x >= x1 and x <= x2 and y >= y1 and y <= y2:
+                return max_height
+            # check for short miss
+            if x < x1 and y < y1:
+                return None
+            elif x > x2 and y < y1:
+                return -1
+            elif y < y1:
+                return None
+        return None
+
+    print(f"Target Area: x={x1}..{x2}, y={y1}..{y2}")
+    location = (0, 0)
+
+    # center_hit = (round((x1 + x2) / 2), round((y1 + y2) / 2))
+    # velocity = center_hit
+    velocity = (1, 1)
+    # value = check_velocity(location, velocity)
+    max_height = 0
+    last_status = None
+    while True:
+        x, y = velocity
+        value = check_velocity(location, velocity)
+        if value is not None and value > max_height:
+            max_height = value
+        if value is None:
+            print(f"Short Miss! {max_height}")
+            last_status = "short"
+            velocity = (x + 1, y)
+            # break
+        elif value == -1:
+            print(f"Long Miss! {max_height}")
+            # if last_status != "hit":
+            #     print(f"Double long hit.")
+            #     break
+            last_status = "long"
+            velocity = (1, y + 1)
+            # break
+        elif value > 0:
+            print(f"Hit! Velocity: {velocity}, Max Height: {value}")
+            last_status = "hit"
+            velocity = (x + 1, y)
+        else:
+            break
+    print(max_height)
+
+def day17b():
+    day = "day17b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    string = data.replace("target area: ", "")
+    a, b = string.split(", ")
+    x1, x2 = a.replace("x=", "").split("..")
+    y1, y2 = b.replace("y=", "").split("..")
+    xmin = int(x1)
+    xmax = int(x2)
+    ymin = int(y1)
+    ymax = int(y2)
+
+    def is_hit(velocity):
+        for pos in trajectory(velocity):
+            if (
+                xmin <= pos[0] <= xmax and
+                ymin <= pos[1] <= ymax
+            ):
+                return True
+        return False
+
+    def trajectory(velocity):
+        pos = (0, 0)
+        while pos[0] <= xmax and pos[1] >= ymin:
+            yield pos
+            # pos = grid.addvec(pos, velocity)
+            pos = tuple(x+y for x,y in zip(pos, velocity))
+            velocity = (
+                max(0, velocity[0] - 1),
+                velocity[1] - 1
+            )
+
+    result = 0
+    for xvel in range(0, xmax + 1):
+        for yvel in range(ymin, -ymin):
+            if is_hit((xvel, yvel)):
+                result += 1
+    print(result)
+
+
+def day18a():
+    day = "day18a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    # inputs = []
+    # for item in data.split("\n"):
+    #     inputs.append(eval(item))
+
+    def parse_line(line):
+        elements = filter(lambda element: element != ',', line)
+        elements = list(map(lambda element: int(element) if element.isdigit() else element, elements))
+        return elements
+
+    def explode(elements, opening_bracket_index):
+        left_number = elements[opening_bracket_index + 1]
+        right_number = elements[opening_bracket_index + 2]
+
+        for i in range(opening_bracket_index - 1, 0, -1):
+            if isinstance(elements[i], int):
+                elements[i] += left_number
+                break
+
+        for i in range(opening_bracket_index + 4, len(elements)):
+            if isinstance(elements[i], int):
+                elements[i] += right_number
+                break
+
+        return elements[:opening_bracket_index] + [0] + elements[opening_bracket_index + 4:]
+
+
+    def try_to_explode(elements):
+        open_brackets = 0
+        for i in range(len(elements)):
+            if open_brackets == 4 and elements[i] == '[':
+                elements = explode(elements, i)
+                return True, elements
+            elif elements[i] == '[':
+                open_brackets += 1
+            elif elements[i] == ']':
+                open_brackets -= 1
+        return False, elements
+
+
+    def try_to_split(elements):
+        for i in range(len(elements)):
+            if isinstance(elements[i], int) and elements[i] >= 10:
+                elements[i:i + 1] = ['[', math.floor(elements[i] / 2), math.ceil(elements[i] / 2), ']']
+                return True, elements
+        return False, elements
+
+
+    def reduce_elements(elements):
+        has_reduced = True
+        while has_reduced:
+            has_reduced, elements = try_to_explode(elements)
+            if not has_reduced:
+                has_reduced, elements = try_to_split(elements)
+
+        return elements
+
+
+    def calculate_magnitude(elements, index=0):
+        if isinstance(elements[index], int):
+            return elements[index], index
+
+        left_sum, index = calculate_magnitude(elements, index + 1)
+        right_sum, index = calculate_magnitude(elements, index + 1)
+
+        return 3 * left_sum + 2 * right_sum, index + 1
+
+    lines = data.split("\n")
+    # elements = list(map(parse_line, lines))
+    # result = elements[0]
+    # for i in range(1, len(elements)):
+    #     result = ['['] + result + elements[i] + [']']
+    #     result = reduce_elements(result)
+    # print(calculate_magnitude(result)[0])
+
+    elements = list(map(parse_line, lines))
+
+    max_magnitude = 0
+    for element1 in elements:
+        for element2 in elements:
+            if element1 == element2:
+                continue
+            added_element = ['['] + deepcopy(element1) + deepcopy(element2) + [']']
+            added_element = reduce_elements(added_element)
+            magnitude = calculate_magnitude(added_element)[0]
+            if magnitude > max_magnitude:
+                max_magnitude = magnitude
+    print(max_magnitude)
+
+def day18b():
+    day = "day18b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    print(data)
+
+
+def day19a():
+    day = "day19a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+
+    from grid import Grid3d
+
+    # import the data from the input
+    scanners = {}
+    scanner = None
+    for row in data.split("\n"):
+        if not row:
+            continue
+        elif "scanner" in row:
+            scanner = row.split(" ")[2]
+            scanners[scanner] = []
+        else:
+            a, b, c = row.split(",")
+            scanners[scanner].append((int(a), int(b), int(c)))
+
+    # import each scanner as a grid instance
+    grids = {}
+    print(f"Generating a grid for each scanner...")
+    for scanner in scanners:
+        beacons = scanners[scanner]
+        grid = Grid3d(beacons)
+        grid.get_distances()
+        grids[scanner] = grid
+
+    # find scanners with matching points
+    print(f"Getting matches between the different scanners based on distances...""")
+    for a in sorted(grids, key=lambda x: int(x)):
+        agrid = grids[a]
+        for b in grids:
+            if b == a:
+                continue
+            bgrid = grids[b]
+            if len(agrid.distset.intersection(bgrid.distset)) >= 11:
+                agrid.matches.append(b)
+
+    # find matching points
+    checked_pairs = []
+    for a in sorted(grids, key=lambda x: int(x)):
+        agrid = grids[a]
+        for b in sorted(agrid.matches, key=lambda x: int(x)):
+            pair = sorted([a, b])
+            if pair in checked_pairs:
+                continue
+            checked_pairs.append(pair)
+            print(f"\n{a} matches with {b}")
+            agrid.get_matching_points(grids[b])
+
+    all_points = []
+    for scanner in grids:
+        g = grids[scanner]
+        for point in g.cube:
+            if point not in all_points:
+                all_points.append(point)
+
+    print(f"Beacons: {len(all_points)}")
+
+
+def day19b():
+    day = "day19b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    print(data)
+
+def day20a():
+    day = "day20a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    algorithm, image = data.split("\n\n")
+
+    def create_grid(image):
+        """Create a grid out of an image."""
+        rows = image.split("\n")
+        grid = {}
+        y = 0
+        while y < len(rows):
+            row = rows[y]
+            x = 0
+            while x < len(row):
+                grid[(x, y)] = row[x]
+                x += 1
+            y += 1
+        return grid
+
+    def display_grid(grid):
+        minimum = min(grid)
+        maximum = max(grid)
+
+        # xmin, ymin = minimum
+        xmax, ymax = maximum
+        # print(f"Min: {minimum}, Max: {maximum}")
+
+        length = ymax + 1
+        width = xmax + 1
+        print(f"\nGrid Size: {width} x {length}")
+
+        y = 0
+        while y < length:
+            row = []
+            x = 0
+            while x < width:
+                p = (x, y)
+                # print(p)
+                v = grid[p]
+                row.append(v)
+                x += 1
+            print("".join(row))
+            y += 1
+
+    def enhance_grid(grid, algorithm):
+        default = grid[(0, 0)]
+
+        # determine values for each pixel
+        values = {}
+        for point in dict(grid):
+            binary = ""
+            x, y = point
+            items = [
+                (x-1, y-1),
+                (x, y-1),
+                (x+1, y-1),
+                (x-1, y),
+                point,
+                (x+1, y),
+                (x-1, y+1),
+                (x, y+1),
+                (x+1, y+1),
+            ]
+            for item in items:
+                if item in grid:
+                    v = grid[item]
+                else:
+                    grid[item] = default
+                    v = default
+
+                if v == ".":
+                    binary += "0"
+                elif v == "#":
+                    binary += "1"
+                else:
+                    print(f"ERROR: Invalid character: {item}")
+            values[point] = int(binary, 2)
+
+        # create new grid
+        newgrid = {}
+        for point in values:
+            v = values[point]
+            newgrid[point] = algorithm[v]
+        return newgrid
+
+    def grow_grid(grid, default=None):
+        """Create a grid out of an image."""
+        default = grid[(0, 0)] if default is None else default
+        xmax, ymax = max(grid)
+        length = ymax + 1
+        width = xmax + 1
+
+        print(f"Grid: {width} x {length}")
+
+        newgrid = {}
+
+        y = 0
+
+        growth = 1
+
+        # add top padding
+        while y < growth:
+            x = 0
+            while x < width + (growth * 2):
+                newgrid[(x, y)] = default
+                x += 1
+            y += 1
+
+        while y < length + growth:
+            x = 0
+
+            # add left padding
+            while x < growth:
+                newgrid[(x, y)] = default
+                x += 1
+
+            # add values
+            while x < length + growth:
+                newgrid[(x, y)] = grid[(x - growth, y - growth)]
+                x += 1
+
+            # add right padding
+            while x < length + (growth * 2):
+                newgrid[(x, y)] = default
+                x += 1
+
+            y += 1
+
+        # add bottom padding
+        while y < length + (growth * 2):
+            x = 0
+            while x < width + (growth * 2):
+                newgrid[(x, y)] = default
+                x += 1
+            y += 1
+
+        return newgrid
+
+
+    # create initial grid
+    grid = create_grid(image)
+    grid = grow_grid(grid, ".")
+    display_grid(grid)
+
+    n = 0
+    while n < 50:
+        grid = enhance_grid(grid, algorithm)
+        grid = grow_grid(grid)
+        n += 1
+
+    # display_grid(grid)
+
+    count = 0
+    for point in grid:
+        if grid[point] == "#":
+            count += 1
+    print(f"Count: {count}")
+
+
+
+def day20b():
+    day = "day20b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    print(data)
+
+
 # Main Function
 def main():
-    day = "15b"
+    day = "20a"
     if len(sys.argv) > 1:
         day = sys.argv[1]
     eval(f"day{day}()")
