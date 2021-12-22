@@ -1,8 +1,12 @@
 #!/bin/python
+import itertools
 import json
 import math
+import random
+import re
 import sys
 from copy import deepcopy
+from dataclasses import dataclass, field
 
 datadir = "data"
 
@@ -2786,7 +2790,6 @@ def day20a():
     print(f"Count: {count}")
 
 
-
 def day20b():
     day = "day20b"
     print(f"Running {day}...")
@@ -2794,9 +2797,319 @@ def day20b():
     print(data)
 
 
+def day21a():
+    day = "day21a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    a, b = data.split("\n")
+    p1 = int(a.split(":")[1].strip())
+    p2 = int(b.split(":")[1].strip())
+
+    class Board:
+
+        def __init__(self, pawn1, pawn2):
+            self.pawn1 = pawn1
+            self.pawn2 = pawn2
+            self.score1 = 0
+            self.score2 = 0
+
+            self.player = 1
+            self.turn = 0
+            self.value = 0
+
+            self.rolls = 0
+
+            self.last_roll = None
+
+            self.universes = 1
+
+        def get_player(self):
+            if self.turn % 2:
+                self.player = "1"
+            else:
+                self.player = "2"
+            return self.player
+
+        def move_pawn(self, spaces):
+            """Move a single pawn."""
+            if self.player == "1":
+                pawn = self.pawn1
+            else:
+                pawn = self.pawn2
+
+            new = pawn + spaces
+            new = 10 if new % 10 == 0 else new % 10
+
+            if self.player == "1":
+                self.pawn1 = new
+                self.score1 += new
+            else:
+                self.pawn2 = new
+                self.score2 += new
+
+            return new
+
+
+        def play_turn(self):
+            """Play a single turn."""
+            self.turn += 1
+
+            player = self.get_player()
+
+            roll1 = self.roll_die()
+            roll2 = self.roll_die()
+            roll3 = self.roll_die()
+            spaces = roll1 + roll2 + roll3
+
+            new = self.move_pawn(spaces)
+            score = self.score1 if player == "1" else self.score2
+
+            print(
+                f"{self.rolls}: Player {player} rolls {roll1}+{roll2}+{roll3} "
+                f"and moves to space {new} for a total score of {score}.")
+
+            if self.score1 >= 1000:
+                final = self.rolls * self.score2
+                print(f"Player 1 Wins! {final}")
+                sys.exit()
+            if self.score2 >= 1000:
+                final = self.rolls * self.score1
+                print(f"Player 2 Wins! {final}")
+                sys.exit()
+
+        def roll_die(self):
+            """Role a die one time."""
+            self.rolls += 1
+            self.value += 1
+            if self.value > 100:
+                self.value = 1
+            return self.value
+
+
+    board = Board(p1, p2)
+
+    n = 0
+    while n < 1000:
+        board.play_turn()
+        n += 1
+
+
+def day21b():
+    day = "day21b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    a, b = data.split("\n")
+    p1 = int(a.split(":")[1].strip())
+    p2 = int(b.split(":")[1].strip())
+    print(p1, p2)
+    rf = [(3,1),(4,3),(5,6),(6,7),(7,6),(8,3),(9,1)]
+
+    ## if p1 is about to move, return (w1,w2) where
+    ## wj is the number of universes where player j wins
+    def wins(p1, t1, p2, t2):
+        if t2 <= 0: return (0, 1) # p2 has won (never p1 since p1 about to move)
+
+        w1, w2 = 0, 0
+        for (r, f) in rf:
+            c2, c1 = wins(p2, t2, (p1 + r) % 10, t1 - 1 - (p1 + r) % 10) # p2 about to move
+            w1, w2 = w1 + f * c1, w2 + f * c2
+
+        return w1,w2
+
+    print("Bigger winner universes:", max(wins(p1-1,21,p2-1,21))) # initially p1=4,p2=2
+
+def day22a():
+    day = "day22a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+
+    commands = []
+    for row in data.split("\n"):
+        command, coords = row.split(" ")
+        xr, yr, zr = coords.split(",")
+        x1, x2 = xr.replace("x=", "").split("..")
+        y1, y2 = yr.replace("y=", "").split("..")
+        z1, z2 = zr.replace("z=", "").split("..")
+        a = (int(x1), int(y1), int(z1))
+        b = (int(x2), int(y2), int(z2))
+        commands.append((command, a, b))
+
+
+    class Reactor:
+
+        def __init__(self, commands):
+            """Initialize."""
+            self.commands = commands
+            self.on = 0
+
+        def get_cubes(self, a, b):
+            """Return all cubes within the cube defined by a, b."""
+            x1, y1, z1 = a
+            x2, y2, z2 = b
+
+            xr = list(range(x1, x2+1))
+            yr = list(range(y1, y2+1))
+            zr = list(range(z1, z2+1))
+
+            for r in itertools.product(xr, yr, zr):
+                # print(r)
+                yield r
+
+        def get_overlap(self, a, b, c, d):
+            x1, y1, z1 = a
+            x2, y2, z2 = b
+
+            x3, y3, z3 = c
+            x4, y4, z4 = d
+            x = max(min(x4, x2) - max(x3, x1) + 1, 0)
+            y = max(min(y4, y2) - max(y3, y1) + 1, 0)
+            z = max(min(z4, z2) - max(z3, z1) + 1, 0)
+            return x * y * z
+
+        def get_size(self, a, b):
+            """Return the size of a cube."""
+            x1, y1, z1 = a
+            x2, y2, z2 = b
+            x = x2 - x1 + 1
+            y = y2 - y1 + 1
+            z = z2 - z1 + 1
+            return x * y * z
+
+        def run_commands(self):
+            """Run the commands."""
+            n = 0
+            while n < len(self.commands[:3]):
+                cmd, a, b = self.commands[n]
+                size = self.get_size(a, b)
+                print(f"\n{cmd}: {a}, {b} [{size}]")
+                if cmd == "on":
+                    m = 0
+                    while m < n:
+                        cmd2, c, d = self.commands[m]
+                        print(f"  * checking {cmd2}: {c}, {d}")
+                        overlap = self.get_overlap(a, b, c, d)
+                        print(f"    overlap: {overlap}")
+                        if cmd2 == "on":
+                            size -= overlap
+                        m += 1
+                    self.on += size
+                if cmd == "off":
+                    m = 0
+                    while m < n:
+                        cmd2, c, d = self.commands[m]
+                        print(f"  * checking {cmd2}: {c}, {d}")
+                        overlap = self.get_overlap(a, b, c, d)
+                        print(f"    overlap: {overlap}")
+                        m += 1
+                n += 1
+                print(f"status: {self.on} lights on")
+
+                # cubes = list(self.get_cubes(a, b))
+                # print(f"Cubes between {a} and {b}: {len(list(cubes))}")
+                # if cmd == "on":
+                #     self.active.update(cubes)
+                # elif cmd == "off":
+                #     self.active = self.active.difference(cubes)
+                # last_cube = (a, b)
+
+    reactor = Reactor(commands)
+    reactor.run_commands()
+    print(f"Cubes that are on: {reactor.on}")
+
+def day22b():
+    day = "day22b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+
+    @dataclass(unsafe_hash=True, repr=True)
+    class Cuboid:
+        """A rectangular box built of unit cubes"""
+        x0: int
+        x1: int
+        y0: int
+        y1: int
+        z0: int
+        z1: int
+        on: bool = field(default=False, compare=False)
+
+        @property
+        def size(self):
+            return (self.x1 - self.x0 + 1) * (self.y1 - self.y0 + 1) * (self.z1 - self.z0 + 1)
+
+        @property
+        def coords(self):
+            return(self.x0, self.x1, self.y0, self.y1, self.z0, self.z1)
+
+        def intersect(self, other):
+            x10 = max(self.x0, other.x0)
+            x11 = min(self.x1, other.x1)
+            y10 = max(self.y0, other.y0)
+            y11 = min(self.y1, other.y1)
+            z10 = max(self.z0, other.z0)
+            z11 = min(self.z1, other.z1)
+            if x10 <= x11 and y10 <= y11 and z10 <= z11:
+                return Cuboid(x10, x11, y10, y11, z10, z11, on=self.on)
+
+        def subtract(self, other):
+            """Return up to 6 rectangular boxes after removing the intersection with other"""
+            cbd = self.intersect(other)
+            if cbd is None:
+                return []
+            L = []
+            (x00, x01, y00, y01, z00, z01) = self.coords
+            (x10, x11, y10, y11, z10, z11) = cbd.coords
+            if x10 - x00 > 0:
+                L.append(Cuboid(x00, x10-1, y00, y01, z00, z01, on=self.on))
+            if x01 - x11 > 0:
+                L.append(Cuboid(x11+1, x01, y00, y01, z00, z01, on=self.on))
+            if y10 - y00 > 0:
+                L.append(Cuboid(x10, x11, y00, y10-1, z00, z01, on=self.on))
+            if y01 - y11 > 0:
+                L.append(Cuboid(x10, x11, y11+1, y01, z00, z01, on=self.on))
+            if z10 - z00 > 0:
+                L.append(Cuboid(x10, x11, y10, y11, z00, z10-1, on=self.on))
+            if z01 - z11 > 0:
+                L.append(Cuboid(x10, x11, y10, y11, z11+1, z01, on=self.on))
+            return L
+
+        @classmethod
+        def from_string(cls, s):
+            """on x=-20..26,y=-36..17,z=-47..7"""
+            onoff_str, coords = s.split()
+            cbd = cls(*tuple(int(n) for n in re.findall(r'-?\d+', coords)))
+            cbd.on = onoff_str == 'on'
+            return cbd
+
+    def reboot(data):
+        S = set()
+        for line in data.split('\n'):
+            cbd = Cuboid.from_string(line)
+            for other in list(S):
+                if cbd.intersect(other) is not None:
+                    S.update(other.subtract(cbd))
+                    S.remove(other)
+            S.add(cbd)
+        return sum(x.size for x in S if x.on)
+
+    part_2 = reboot(data)
+    print('part_2 =', part_2)
+
+
+def day23a():
+    day = "day23a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    print(data)
+
+def day23b():
+    day = "day23b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+
+
 # Main Function
 def main():
-    day = "20a"
+    day = "23a"
     if len(sys.argv) > 1:
         day = sys.argv[1]
     eval(f"day{day}()")
