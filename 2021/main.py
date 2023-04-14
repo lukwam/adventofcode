@@ -3099,17 +3099,385 @@ def day23a():
     day = "day23a"
     print(f"Running {day}...")
     data = get_data_as_string(day)
-    print(data)
+    rows = data.split("\n")
+
+
+    class Node:
+        def __init__(self, data=None):
+            self.data = data
+            self.up = None
+            self.down = None
+            self.left = None
+            self.right = None
+
+    class Burrow:
+
+        energy = {
+            "A": 1,
+            "B": 10,
+            "C": 100,
+            "D": 1000,
+        }
+
+        def __init__(self, data):
+            rows = data.split("\n")
+            # create room 1
+            self.room1a = Node(rows[3][3])
+            self.room1b = Node(rows[2][3])
+            self.room1a.up = self.room1b
+            self.room1b.down = self.room1a
+
+            # create room 2
+            self.room2a = Node(rows[3][5])
+            self.room2b = Node(rows[2][5])
+            self.room2a.up = self.room2b
+            self.room2b.down = self.room2a
+
+            # create room 3
+            self.room3a = Node(rows[3][7])
+            self.room3b = Node(rows[2][7])
+            self.room3a.up = self.room3b
+            self.room3b.down = self.room3a
+
+            # create room 4
+            self.room4a = Node(rows[3][9])
+            self.room4b = Node(rows[2][9])
+            self.room4a.up = self.room4b
+            self.room4b.down = self.room4a
+
+            # create hall
+            self.hall1 = Node()
+            self.hall2 = Node()
+            self.hall3 = Node()
+            self.hall4 = Node()
+            self.hall5 = Node()
+            self.hall6 = Node()
+            self.hall7 = Node()
+            self.hall8 = Node()
+            self.hall9 = Node()
+            self.hall10 = Node()
+            self.hall11 = Node()
+
+            # link hallway nodes
+            self.hall1.right = self.hall2
+            self.hall2.left = self.hall1
+            self.hall2.right = self.hall3
+            self.hall3.left = self.hall2
+            self.hall3.right = self.hall4
+            self.hall4.left = self.hall3
+            self.hall4.right = self.hall5
+            self.hall5.left = self.hall4
+            self.hall5.right = self.hall6
+            self.hall6.left = self.hall5
+            self.hall6.right = self.hall7
+            self.hall7.left = self.hall6
+            self.hall7.right = self.hall8
+            self.hall8.left = self.hall7
+            self.hall8.right = self.hall9
+            self.hall9.left = self.hall8
+            self.hall9.right = self.hall10
+            self.hall10.left = self.hall9
+            self.hall10.right = self.hall11
+            self.hall11.left = self.hall10
+
+            # link hallways to rooms
+            self.hall3.down = self.room1b
+            self.room1b.up = self.hall3
+
+            self.hall5.down = self.room2b
+            self.room2b.up = self.hall5
+
+            self.hall7.down = self.room3b
+            self.room3b.up = self.hall7
+
+            self.hall9.down = self.room4b
+            self.room4b.up = self.hall9
+
+
+    # Moves
+
+
+    # shortest distance
+
+    # D1 = 6000
+    # D2 = 8000
+
+    # C1 = 600
+    # C2 = 700
+
+    # B1 = 50
+    # B2 = 100
+
+    # A1 = 12
+    # A2 = 12
+
+    # A 9
+    # A 9
+
+    # D 9000
+
+    # B 40
+
+    # D 5000
+
+    # C 800
+
+    # B 20
+
+    # C 500
+
+    # B 30
+    # B 60
+
+    # A 3
+
+    # A 3
+
+
+    #############
+    #...........#
+    ###D#B#B#A###
+      #C#C#D#A#
+      #########
+
+    # A moves up, left * 9 (10)
+
+    #############
+    #A..........#
+    ###D#B#B#.###
+      #C#C#D#A#
+      #########
+
+    # A moves up * 2, left * 8 (10)
+
+    #############
+    #AA.........#
+    ###D#B#B#.###
+      #C#C#D#.#
+      #########
+
+    # B moves up, right 4 (50)
+
+    #############
+    #AA.......B.#
+    ###D#B#.#.###
+      #C#C#D#.#
+      #########
+
+    # B moves up, left  (20)
+
+    #############
+    #AA.B.....B.#
+    ###D#.#.#.###
+      #C#C#D#.#
+      #########
+
+    # D move up * 2, right * 2, down * 2 (6000)
+
+    #############
+    #AA.B.....B.#
+    ###D#.#.#.###
+      #C#C#.#D#
+      #########
+
+    # C moves up * 2, right * 2, down * 2 (600)
+
+    #############
+    #AA.B.....B.#
+    ###D#.#.#.###
+      #C#.#C#D#
+      #########
+
+    # B moves right, down * 2 (30)
+
+    #############
+    #AA.......B.#
+    ###D#.#.#.###
+      #C#B#C#D#
+      #########
+
+    # B moves left 5, down 1 (60)
+
+    #############
+    #AA.........#
+    ###D#B#.#.###
+      #C#B#C#D#
+      #########
+
+    # D moves up, right 6, down 1 (8000)
+
+    #############
+    #AA.........#
+    ###.#B#.#D###
+      #C#B#C#D#
+      #########
+
+    # C moves up 2, right 4, down 1 (800)
+
+    #############
+    #AA.........#
+    ###.#B#C#D###
+      #.#B#C#D#
+      #########
+
+    # A moves 1, down 2 (3)
+
+    #############
+    #A..........#
+    ###.#B#C#D###
+      #A#B#C#D#
+      #########
+
+    # A moves right 2, down 1 (3)
+
+    #############
+    #...........#
+    ###A#B#C#D###
+      #A#B#C#D#
+      #########
+
+
+
+    burrow = Burrow(data)
+
 
 def day23b():
     day = "day23b"
     print(f"Running {day}...")
     data = get_data_as_string(day)
+    print(data)
+
+def day24a():
+    day = "day24a"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    instructions = []
+    for row in data.split("\n"):
+        r = row.split(" ")
+        cmd = a = b = None
+        if len(r) == 2:
+            cmd, a = r
+            instructions.append((cmd, a))
+        else:
+            cmd, a, b = r
+            instructions.append((cmd, a, b))
+
+
+    class ALU:
+
+        def __init__(self, instructions):
+            self.vars = {
+                "w": 0,
+                "x": 0,
+                "y": 0,
+                "z": 0,
+            }
+            self.instructions = instructions
+            self.model = None
+            self.status = None
+
+        def run(self, model):
+            """Run the instructions."""
+            self.status = "running"
+            self.model = [int(x) for x in str(model)]
+            for row in self.instructions:
+                if self.status != "running":
+                    return False
+                if len(row) == 2:
+                    cmd, a = row
+                else:
+                    cmd, a, b = row
+                if cmd == "inp":
+                    self.inp(a)
+                else:
+                    getattr(self, cmd)(a, b)
+            if not self.vars["z"]:
+                return True
+            return False
+
+        def inp(self, a):
+            """Read an input value and write it to variable a."""
+            value = self.model.pop(0)
+            # print(f"Reading input value {value} and writing to variable {a}.")
+            self.vars[a] = value
+
+        def add(self, a, b):
+            """Add the value of a to the value of b, then store the result in variable a."""
+            # print(f"Adding {a} to {b} and storing in {a}")
+            if b.isnumeric() or b.startswith("-"):
+                value = int(b)
+            else:
+                value = self.vars[b]
+            self.vars[a] += value
+
+        def mul(self, a, b):
+            """Multiply the value of a by the value of b, then store the result in variable a."""
+            # print(f"Muliplying {a} by {b} and storing in {a}.")
+            if b.isnumeric() or b.startswith("-"):
+                value = int(b)
+            else:
+                value = self.vars[b]
+            self.vars[a] *= value
+
+        def div(self, a, b):
+            """Divide the value of a by the value of b, truncate the result to an integer, then store the result in variable a. (Here, "truncate" means to round the value toward zero.)"""
+            # print(f"Dividing {a} by {b} and storing in {a}")
+            if b.isnumeric() or b.startswith("-"):
+                value = int(b)
+            else:
+                value = self.vars[b]
+            if value < 1:
+                self.status = "failed"
+                return
+            self.vars[a] = math.floor(self.vars[a] // value)
+
+        def mod(self, a, b):
+            """Divide the value of a by the value of b, then store the remainder in variable a. (This is also called the modulo operation.)"""
+            # print(f"Dividing {a} by {b} and storing remainder in {a}")
+            if b.isnumeric() or b.startswith("-"):
+                value = int(b)
+            else:
+                value = self.vars[b]
+            if self.vars[a] < 0 or value <= 0:
+                self.status = "failed"
+                return
+            self.vars[a] = self.vars[a] % value
+
+        def eql(self, a, b):
+            """If the value of a and b are equal, then store the value 1 in variable a. Otherwise, store the value 0 in variable a."""
+            # print(f"Checking if {a} and {b} are equal and updating {a}.")
+            if b.isnumeric() or b.startswith("-"):
+                value = int(b)
+            else:
+                value = self.vars[b]
+            self.vars[a] = 1 if self.vars[a] == value else 0
+
+
+    alu = ALU(instructions)
+    model = 11111111111111
+    while True:
+        print(f"Running model {model}...")
+        response = alu.run(str(model))
+        if response:
+            print(f"Success: {model}!")
+            return
+        model += 1
+        while "0" in str(model):
+            model += 1
+
+    print(alu.vars)
+
+
+def day24b():
+    day = "day24b"
+    print(f"Running {day}...")
+    data = get_data_as_string(day)
+    print(data)
 
 
 # Main Function
 def main():
-    day = "23a"
+    day = "24a"
     if len(sys.argv) > 1:
         day = sys.argv[1]
     eval(f"day{day}()")
